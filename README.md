@@ -64,3 +64,9 @@ Open `http://localhost:3000` and explore `/`, `/shop`, `/products/violet-moon-ch
 ## Repo deployment
 
 No GitHub repositories, Vercel teams/projects or Supabase projects were returned by the connected accounts during initial setup. The deliverable is therefore a **downloadable source project**, not a deployed or connected production website. You can create a repository and connect it to Vercel when ready.
+
+## Phase 2 — storefront / Vercel preview
+
+Phase 2 expands the product gallery, seller-defined license price selection, quantity and exclusive-product limits, multi-seller cart grouping, and separate fixed-price versus commission brief checkout preview. Checkout confirmation remains **disabled** pending authenticated backend, seller policy acceptance snapshots, inventory reservation, and payment verification. The mock catalog contains two fictional seller shops.
+
+See [PHASE2_VERCEL.md](PHASE2_VERCEL.md) for GitHub/Vercel preview workflows, caveats, and testing instructions. Run `npm run test:phase2` for fixture-level cart tests.
