@@ -70,3 +70,11 @@ No GitHub repositories, Vercel teams/projects or Supabase projects were returned
 Phase 2 expands the product gallery, seller-defined license price selection, quantity and exclusive-product limits, multi-seller cart grouping, and separate fixed-price versus commission brief checkout preview. Checkout confirmation remains **disabled** pending authenticated backend, seller policy acceptance snapshots, inventory reservation, and payment verification. The mock catalog contains two fictional seller shops.
 
 See [PHASE2_VERCEL.md](PHASE2_VERCEL.md) for GitHub/Vercel preview workflows, caveats, and testing instructions. Run `npm run test:phase2` for fixture-level cart tests.
+
+## Phase 3 — Supabase Auth and role-based workspaces
+
+Phase 3 adds protected workspace selection (`/workspace`), email login/signup and verification, resend verification, Google OAuth PKCE callback, password recovery, TOTP MFA setup/challenge, seller application status (`/sell/application`) and server/RLS-guarded Buyer, Seller and Admin screens. Phase 3's `003_phase3_auth_hardening.sql` enforces `aal2` in database helper checks for sensitive seller/admin rows. Email/password login is supported; **username login is not yet included** (username is only a public handle).
+
+**No migrations, user accounts, domain settings or deployments were created remotely by this update.** Follow [PHASE3_SUPABASE_VERCEL.md](PHASE3_SUPABASE_VERCEL.md) to configure your staging Supabase project and Vercel environment variables, review migrations and test roles. Complete the checklist before moving beyond preview; no real checkout is enabled.
+
+Tests: `npm run check:source && npm run test:phase2 && npm run test:phase3 && npm run typecheck && npm run build` (the final two require dependencies to be installed and the Vercel environment configured).
