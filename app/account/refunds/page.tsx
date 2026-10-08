@@ -1,0 +1,3 @@
+import {requireUser} from '@/lib/auth';
+import {money} from '@/lib/catalog';
+export default async function Refunds(){const {client,user}=await requireUser('/account/refunds');const {data}=await client!.from('refund_requests').select('id,amount_minor,reason,status,created_at').eq('buyer_id',user.id).order('created_at',{ascending:false});return <div className="container page-pad"><div className="page-heading"><div className="eyebrow">MY ACCOUNT</div><h1>Refund <em>requests.</em></h1></div>{data?.length?<div className="preview-panels">{data.map(r=><div className="preview-panel" key={r.id}><h3>{money(r.amount_minor/100)}</h3><p>สถานะ: {r.status}</p><p>{r.reason}</p></div>)}</div>:<div className="empty-state">ยังไม่มีคำขอคืนเงิน</div>}</div>}

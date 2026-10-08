@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import {policyPages} from '@/lib/policies';
+export default function Policies(){return <div className="container page-pad"><div className="page-heading"><div className="eyebrow">TIDALIS / LEGAL CENTER</div><h1>Terms & <em>Policies.</em></h1><p>แยกนโยบายของแพลตฟอร์มออกจากนโยบายของผู้ขายแต่ละร้าน</p></div><div className="legal-alert">ข้อความนโยบายในโปรเจกต์เวอร์ชันเริ่มต้นยังเป็นโครงร่างสำหรับออกแบบ ไม่ใช่เอกสารกฎหมายฉบับเผยแพร่ กรุณาให้ผู้เชี่ยวชาญตรวจและอนุมัติก่อนใช้งานจริง</div><div className="policy-list">{policyPages.map(({slug,title,desc,icon:Icon})=><Link href={`/policies/${slug}`} className="policy-link" key={slug}><Icon size={25}/><h2>{title}</h2><p>{desc}</p></Link>)}</div></div>}
