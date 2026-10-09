@@ -78,3 +78,8 @@ Phase 3 adds protected workspace selection (`/workspace`), email login/signup an
 **No migrations, user accounts, domain settings or deployments were created remotely by this update.** Follow [PHASE3_SUPABASE_VERCEL.md](PHASE3_SUPABASE_VERCEL.md) to configure your staging Supabase project and Vercel environment variables, review migrations and test roles. Complete the checklist before moving beyond preview; no real checkout is enabled.
 
 Tests: `npm run check:source && npm run test:phase2 && npm run test:phase3 && npm run typecheck && npm run build` (the final two require dependencies to be installed and the Vercel environment configured).
+
+
+## Phase 4 — Seller onboarding & admin review
+
+See [PHASE4_PRODUCTION_GUIDE.md](PHASE4_PRODUCTION_GUIDE.md) for safe deployment, migration and policy publication. Run `npm run test:phase4` for structural checks; do **not** apply SQL to production without a staging clone/backup and legal approval.

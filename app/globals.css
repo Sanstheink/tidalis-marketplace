@@ -35,3 +35,33 @@
 @keyframes otpShake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
 @media(max-width:520px){.otp-card{padding:30px 19px;border-radius:17px}.otp-cell{border-radius:9px;height:52px}.otp-destination{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.otp-card,.otp-halo,.otp-halo:after,.otp-cell-filled,.otp-field-error .otp-inputs{animation:none!important}.otp-cell,.auth-mode-switch button{transition:none!important}.otp-cell:focus-visible{transform:none}}
+
+/* Phase 4 — reviewed seller onboarding & policy administration */
+.phase4-card{background:linear-gradient(145deg,#21172e,#171020);border:1px solid #4e3b67;border-radius:16px;padding:clamp(20px,3vw,30px);box-shadow:0 12px 38px #0002}
+.phase4-card h2{font-size:clamp(19px,2.4vw,25px);margin:12px 0 18px}
+.phase4-card p{font-size:12px;overflow-wrap:anywhere}
+.phase4-form{padding:clamp(24px,3vw,38px);border:1px solid #4e3b67;border-radius:18px;background:linear-gradient(145deg,#251831,#140e1e);box-shadow:0 18px 50px #0004}
+.phase4-form h2{margin:12px 0 8px}.phase4-form label:not(.checkbox-label){display:block;color:#e1c9fa;font-size:12px;font-weight:700}
+.phase4-form input:not([type=checkbox]),.phase4-form textarea,.phase4-action-form input:not([type=checkbox]),.phase4-action-form textarea{width:100%;background:#120d1b;border:1px solid #604778;border-radius:10px;padding:13px 14px;color:#f5ebff;outline:none}
+.phase4-form input:focus-visible,.phase4-form textarea:focus-visible,.phase4-action-form input:focus-visible,.phase4-action-form textarea:focus-visible{border-color:#c7a8ff;box-shadow:0 0 0 3px #a77aff2d}
+.phase4-form textarea,.phase4-action-form textarea{resize:vertical;line-height:1.7}
+.phase4-form input::placeholder,.phase4-form textarea::placeholder{color:#8b7b9f}
+.phase4-url-input{display:flex;align-items:center;background:#120d1b;border:1px solid #604778;border-radius:10px;overflow:hidden}
+.phase4-url-input span{font-size:11px;padding-left:12px;color:#bb9fd5;white-space:nowrap}.phase4-url-input input{border:0!important;min-width:0!important;padding-left:4px!important;box-shadow:none!important}
+.phase4-agreement{background:#21172e;border:1px solid #62467f;border-radius:13px;padding:19px;margin:25px 0 8px;display:flex;flex-direction:column;gap:10px}
+.phase4-agreement strong{font-size:14px}.phase4-agreement span{color:#af9dc4;font-size:11px}.phase4-agreement .checkbox-label{font-size:12px;line-height:1.75;color:#e0d2ef}
+.phase4-status-list,.phase4-application-grid{display:grid;gap:20px;grid-template-columns:repeat(2,minmax(0,1fr))}.phase4-application-grid{align-items:start}
+.phase4-status-heading,.phase4-status-heading>div{display:flex;align-items:center;gap:12px}.phase4-status-heading{justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}.phase4-status-heading h2{margin:0}
+.phase4-status-heading svg{color:#b892ea}.phase4-status-heading .eyebrow{font-size:10px}.phase4-application-grid .phase4-status-heading>div{display:block}
+.phase4-review-note{background:#31213a;border-left:3px solid #bb8efe;border-radius:8px;padding:14px 16px;margin:16px 0}.phase4-review-note strong{color:#ecd4ff;font-size:12px}.phase4-review-note p{margin:7px 0 0;color:#d5bedf;white-space:pre-wrap}
+.phase4-description{white-space:pre-wrap;max-height:190px;overflow:auto}.phase4-small{font-size:11px;color:#aa97be;line-height:1.7;overflow-wrap:anywhere}
+.phase4-review-actions{display:flex;flex-direction:column;gap:20px;border-top:1px solid #4d385d;margin-top:20px;padding-top:20px}
+.phase4-action-form{display:flex;flex-direction:column;gap:11px}.phase4-action-form label{color:#dbc9ec;font-size:12px}.phase4-action-form small{font-size:11px;color:#ac99bf}
+.phase4-action-form .checkbox-label{display:flex;align-items:flex-start;gap:9px;line-height:1.7}.phase4-action-form input[type=checkbox]{margin-top:4px;accent-color:#a77aff;flex:none}
+.phase4-alert{margin:0 0 22px;padding:16px;background:#302243;border:1px solid #8a6cb6;border-radius:10px;color:#e2d1f4;font-size:12px}
+.phase4-policy-body{white-space:pre-wrap;overflow-wrap:anywhere;color:#e3d7ed;line-height:2;font-size:14px;background:#1a1422;border:1px solid #443153;border-radius:14px;padding:clamp(24px,4vw,45px);margin:20px 0 30px}
+.phase4-table-scroll{overflow-x:auto}.phase4-policy-editor,.phase4-publish{margin-top:28px}.phase4-policy-editor{max-width:900px}
+@media(max-width:900px){.phase4-status-list,.phase4-application-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.phase4-url-input{flex-direction:column;align-items:stretch;padding-top:10px}.phase4-url-input input{padding-left:12px!important}.phase4-card{padding:18px}}
+
+.phase4-policy-preview{margin:20px 0}.phase4-policy-preview summary{cursor:pointer;color:#d8b6ff;font-weight:750;font-size:12px}.phase4-policy-preview .phase4-policy-body{max-height:480px;overflow:auto}
