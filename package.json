@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "check:source": "node scripts/check-source.cjs",
     "test:phase2": "node scripts/test-phase2.cjs",
-    "test:phase3": "node scripts/test-phase3.cjs"
+    "test:phase3": "node scripts/test-phase3.cjs",
+    "test:otp-email": "node scripts/test-otp-email.cjs"
   },
   "dependencies": {
     "next": "^16.4.0",
@@ -17,7 +18,8 @@
     "react-dom": "^19.1.0",
     "@supabase/supabase-js": "^2.57.0",
     "@supabase/ssr": "^0.12.7",
-    "lucide-react": "^0.468.0"
+    "lucide-react": "^0.468.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
