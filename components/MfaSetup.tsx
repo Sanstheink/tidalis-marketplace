@@ -5,6 +5,7 @@ import {useRouter} from 'next/navigation';
 import {ShieldCheck} from 'lucide-react';
 import {supabaseBrowser} from '@/lib/supabase/browser';
 import {safeNextPath} from '@/lib/auth-routes';
+import {OtpCodeInput} from '@/components/OtpCodeInput';
 
 export function MfaSetup({next='/workspace'}:{next?:string}){
  const [factorId,setFactorId]=useState('');const [qr,setQr]=useState('');const [code,setCode]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [hasVerifiedFactor,setHasVerifiedFactor]=useState(false);
@@ -39,8 +40,7 @@ export function MfaSetup({next='/workspace'}:{next?:string}){
  {loading?<p>กำลังตรวจสอบ MFA...</p>:!factorId?<button className="btn btn-primary wide" onClick={enroll}>สร้าง QR สำหรับเปิด MFA</button>:<>
  {!hasVerifiedFactor&&<div><p>หากเคยลงทะเบียนแล้วแต่ไม่มี QR ให้เริ่มตั้งค่า Factor ที่ยังไม่ยืนยันใหม่ได้</p>{!qr&&<button type="button" className="btn btn-outline" onClick={resetUnverified} disabled={loading}>เริ่มตั้งค่า MFA ใหม่</button>}</div>}
  {qr&&<div style={{background:'white',padding:15,display:'inline-flex',margin:'15px 0'}}><img src={qr} alt="สแกน QR ด้วยแอป Authenticator" width={200} height={200}/></div>}
- <label htmlFor="totp-code" className="field-label">{hasVerifiedFactor?'รหัสสำหรับยืนยันการเข้าสู่ระบบ':'รหัสสำหรับเปิดใช้งาน MFA'}</label>
- <input id="totp-code" placeholder="000000" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))}/>
+ <OtpCodeInput value={code} onChange={setCode} disabled={loading} error={Boolean(error)} label={hasVerifiedFactor?'รหัสจากแอป Authenticator':'รหัสจากแอปเพื่อเปิดใช้งาน MFA'}/>
  <button className="btn btn-primary wide" onClick={verify} disabled={loading||code.length!==6}>ยืนยันรหัสและดำเนินการต่อ</button></>}
  {error&&<div role="alert" className="form-message">{error}</div>}
  <p className="helper">อย่าแชร์ QR หรือรหัส TOTP กับผู้อื่น และตั้งค่าวิธีกู้คืนการเข้าถึงบัญชีกับผู้ดูแลอย่างปลอดภัย</p><Link href="/workspace">กลับไปเลือก Workspace</Link></div>
