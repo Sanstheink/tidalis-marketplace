@@ -1,0 +1,90 @@
+/** Public storefront reads only. Never exposes private Storage file paths. */
+import 'server-only';
+import { createClient } from '@supabase/supabase-js';
+
+import {type PublicProduct, type PublicShop, type PublicLicense, type PublicProductType} from '@/lib/public-catalog-shared';
+// Using a cookie-free client avoids expanding public visibility via an admin/seller session.
+// Supabase RLS still applies, and every read below ALSO filters for publication.
+function publicClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+const PRODUCT_SELECTION = 'id,slug,name,description,product_type,pricing_mode,is_exclusive,stock,shop_id,shop:shops!inner(id,slug,name,status),work_type:shop_work_types(name),product_license_prices(usage_type,price_minor,terms)';
+
+type RecordLike = Record<string, unknown>;
+const single = (v: unknown): RecordLike | null => {
+  if (Array.isArray(v)) return (v[0] ?? null) as RecordLike | null;
+  return v && typeof v === 'object' ? v as RecordLike : null;
+};
+const asText = (v: unknown) => typeof v === 'string' ? v : '';
+const asPrice = (v: unknown) => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : null;
+function normalizeProduct(row: RecordLike): PublicProduct | null {
+  const shop = single(row.shop);
+  if (!shop || asText(shop.status) !== 'active') return null;
+  const productType = asText(row.product_type);
+  if (!['commission','ready_made','digital_asset'].includes(productType)) return null;
+  const licenses = (Array.isArray(row.product_license_prices) ? row.product_license_prices : [])
+    .flatMap(v => {
+      const license = single(v);
+      if (!license) return [];
+      const type = asText(license.usage_type);
+      const price = asPrice(license.price_minor);
+      if (!['personal','commercial'].includes(type) || price === null) return [];
+      return [{ usageType: type as PublicLicense['usageType'], priceMinor: price, terms: asText(license.terms) }];
+    });
+  if (!licenses.length) return null; // Don't show a product without a valid public price.
+  const workType = single(row.work_type);
+  return {
+    id: asText(row.id), slug: asText(row.slug), name: asText(row.name),
+    description: asText(row.description), productType: productType as PublicProductType,
+    pricingMode: row.pricing_mode === 'quote' ? 'quote' : 'fixed',
+    shopId: asText(shop.id), shopSlug: asText(shop.slug), shopName: asText(shop.name),
+    workType: asText(workType?.name) || 'Digital artwork',
+    exclusive: row.is_exclusive === true,
+    stock: typeof row.stock === 'number' ? row.stock : null,
+    licenses,
+  };
+}
+
+export async function getPublicProducts(options: {limit?:number; type?:PublicProductType; shopId?:string} = {}): Promise<PublicProduct[]> {
+  const client = publicClient();
+  if (!client) return [];
+  const limit = Math.min(60, Math.max(1, options.limit ?? 24));
+  let query = client.from('products')
+    .select(PRODUCT_SELECTION)
+    .eq('status','published').eq('shop.status','active')
+    .order('created_at',{ascending:false}).limit(limit);
+  if (options.type) query = query.eq('product_type', options.type);
+  if (options.shopId) query = query.eq('shop_id',options.shopId);
+  const {data,error} = await query;
+  if (error) { console.error('[Tidalis public catalog] read failed', error.code); return []; }
+  return (data ?? []).flatMap(record => {
+    const product = normalizeProduct(record as unknown as RecordLike);
+    return product ? [product] : [];
+  });
+}
+
+export async function getPublicProductByRoute(routeSlug: string): Promise<PublicProduct | null> {
+  // Require a UUID suffix: a product slug alone isn't globally unique across shops.
+  const match = routeSlug.match(/^(.+)--([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if (!match) return null;
+  const client = publicClient();
+  if (!client) return null;
+  const {data,error} = await client.from('products').select(PRODUCT_SELECTION)
+    .eq('id',match[2]).eq('slug',match[1])
+    .eq('status','published').eq('shop.status','active').maybeSingle();
+  if (error) { console.error('[Tidalis public product] read failed',error.code); return null; }
+  return data ? normalizeProduct(data as unknown as RecordLike) : null;
+}
+
+export async function getPublicShop(slug: string): Promise<PublicShop | null> {
+  const client = publicClient();
+  if (!client) return null;
+  const {data,error} = await client.from('shops')
+    .select('id,slug,name,description').eq('slug',slug).eq('status','active').maybeSingle();
+  if (error) { console.error('[Tidalis public shop] read failed',error.code); return null; }
+  return data ? {id:data.id,slug:data.slug,name:data.name,description:data.description ?? ''} : null;
+}

@@ -88,3 +88,26 @@
 .phase5-file-list{min-height:86px;display:grid;align-content:start;gap:10px}.phase5-file-list>div:not(.phase5-file-empty){display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #49365f;padding:10px;border-radius:9px;overflow-wrap:anywhere;font-size:11px}.phase5-file-list a{color:#c7a8ff}.phase5-message{padding:14px;background:#39234b;border:1px solid #9873c3;border-radius:10px;color:#edddff;margin-top:19px;overflow-wrap:anywhere}
 @media(max-width:790px){.phase5-mode-grid,.phase5-file-grid{grid-template-columns:1fr}.phase5-mode-grid{gap:9px}.phase5-mode{padding:14px 19px}.phase5-license-grid,.phase5-form-grid{grid-template-columns:1fr}.phase5-save-bar{flex-wrap:wrap}.phase5-save-bar .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){.phase5-mode{transition:none}.phase5-mode:hover{transform:none}}
+
+/* Phase 5.5 — read-only, public Supabase catalog (no private artwork exposure). */
+.live-product-art{height:305px;border-color:#665080;background:radial-gradient(circle at 55% 34%,#51387f 0%,#2d2142 38%,#130f1d 80%)}
+.live-product-ready_made{background:radial-gradient(circle at 60% 28%,#6f439c,#271634 55%,#130f1b)}
+.live-product-digital_asset{background:radial-gradient(circle at 30% 25%,#4e508f,#261e51 45%,#110e20)}
+.live-product-commission{background:radial-gradient(circle at 50% 22%,#80436a,#351f48 55%,#150f23)}
+.live-placeholder-caption{position:absolute;left:12px;top:12px;color:#dac7ee;font-size:10px;z-index:2;padding:4px 8px;background:#18111fb8;border-radius:6px}
+.live-art-symbol{font-size:100px;color:#e1c3ff;filter:drop-shadow(0 0 40px #b480e7a6);position:relative;line-height:1}
+.live-product-card:hover .live-art-symbol{transform:scale(1.035);transition:transform .23s ease}
+.live-detail-cover{height:min(58vw,580px);min-height:330px;border-radius:18px;border:1px solid #635077}
+.live-detail-sigil{position:relative;font-size:clamp(110px,17vw,220px);color:#e2c5fa;text-shadow:0 0 60px #ac78dc99}
+.phase55-license-list{display:grid;gap:12px;margin:15px 0 22px}
+.phase55-license{display:flex;gap:16px;justify-content:space-between;align-items:start;background:#281b36;border:1px solid #654980;border-radius:12px;padding:18px}
+.phase55-license strong{color:#f2e5ff;font-size:14px;white-space:nowrap}
+.phase55-license p{font-size:12px;margin:6px 0 0;white-space:pre-wrap}
+.phase55-disabled-purchase{display:flex;gap:12px;align-items:start;border:1px solid #9171b5;background:#312041;padding:16px;border-radius:12px;margin:15px 0 20px}
+.phase55-disabled-purchase svg{flex:none;color:#d1b2ff}
+.phase55-disabled-purchase strong{color:#ebdaff}
+.phase55-disabled-purchase p{font-size:12px;margin:6px 0 0}
+.phase55-exclusivity{display:flex;align-items:center;gap:7px;font-size:12px}
+.phase55-description{white-space:pre-wrap}
+@media(max-width:680px){.phase55-license{flex-direction:column}.live-detail-cover{min-height:280px;height:320px}}
+@media(prefers-reduced-motion:reduce){.live-product-card:hover .live-art-symbol{transition:none;transform:none}}

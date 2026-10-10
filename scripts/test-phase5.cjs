@@ -12,7 +12,7 @@ const checks=[
  ['Both licensing prices saved transactionally',sql.includes("on conflict(product_id,usage_type) do update")&&sql.includes("p_personal_price_minor")&&sql.includes('p_commercial_price_minor')],
  ['Shop drafts never publish automatically',sql.includes("p_work_type_id,'draft'")&& !sql.includes("set status='published'")],
  ['Exclusive work limited to one ready-made unit',sql.includes("p_stock <> 1")&&sql.includes("p_product_type <> 'ready_made'")],
- ['Private bucket and per-shop storage ACL',sql.includes("'tidalis-product-files',false")&&sql.includes("create policy tidalis_catalog_files_insert")&&sql.includes("p.shop_id::text=(storage.foldername(name))[2]")],
+ ['Private bucket and per-shop storage ACL',sql.includes("'tidalis-product-files',false")&&sql.includes("create policy tidalis_catalog_files_insert")&&sql.includes("p.shop_id::text=(storage.foldername(storage.objects.name))[2]")],
  ['Upload registered only after Storage object ownership check',sql.includes('owner_id=auth.uid()::text')&&sql.includes('catalog_file_attached')],
  ['Editor supports product modes and license variants',editor.includes('commission')&&editor.includes('ready_made')&&editor.includes('digital_asset')&&editor.includes('personal')&&editor.includes('commercial')&&editor.includes('`${key}Price`')],
  ['Product writes use server-side role check, RPC only',actions.includes('requireSeller()')&&actions.includes("client.rpc('save_seller_product_draft'")&& !actions.includes(".from('products').insert")],

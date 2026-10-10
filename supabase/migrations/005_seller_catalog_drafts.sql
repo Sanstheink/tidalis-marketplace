@@ -126,8 +126,8 @@ for insert to authenticated with check (
  and exists(
    select 1 from public.products p
    join public.shops s on s.id=p.shop_id
-   where p.id::text=(storage.foldername(name))[4]
-     and p.shop_id::text=(storage.foldername(name))[2]
+   where p.id::text=(storage.foldername(storage.objects.name))[4]
+     and p.shop_id::text=(storage.foldername(storage.objects.name))[2]
      and p.status='draft' and s.status in ('active','paused')
      and public.is_shop_member(p.shop_id,(select auth.uid()),array['owner','manager','artist'])
  )
@@ -140,8 +140,8 @@ for select to authenticated using (
  and (storage.foldername(name))[1]='shops'
  and (storage.foldername(name))[3]='products'
  and exists(
-   select 1 from public.products p where p.id::text=(storage.foldername(name))[4]
-     and p.shop_id::text=(storage.foldername(name))[2]
+   select 1 from public.products p where p.id::text=(storage.foldername(storage.objects.name))[4]
+     and p.shop_id::text=(storage.foldername(storage.objects.name))[2]
      and public.is_shop_member(p.shop_id,(select auth.uid()),array['owner','manager','artist'])
  )
 );
