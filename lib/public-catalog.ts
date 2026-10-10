@@ -88,3 +88,36 @@ export async function getPublicShop(slug: string): Promise<PublicShop | null> {
   if (error) { console.error('[Tidalis public shop] read failed',error.code); return null; }
   return data ? {id:data.id,slug:data.slug,name:data.name,description:data.description ?? ''} : null;
 }
+
+/** Only active shops are indexed. Uses a cookie-free anon client and a public-column allowlist. */
+export type PublicArtistDirectoryResult = {
+  shops: PublicShop[];
+  total: number;
+  unavailable: boolean;
+};
+
+export async function getPublicArtists(options: {page?: number; pageSize?: number; search?: string} = {}): Promise<PublicArtistDirectoryResult> {
+  const client = publicClient();
+  if (!client) return { shops: [], total: 0, unavailable: true };
+  const pageSize = Math.min(24, Math.max(1, Math.trunc(options.pageSize ?? 12)));
+  const page = Math.min(10000, Math.max(1, Math.trunc(options.page ?? 1)));
+  const search = (options.search ?? '').trim().slice(0, 80);
+  let query = client.from('shops')
+    .select('id,slug,name,description', {count: 'exact'})
+    .eq('status', 'active');
+  // Escape SQL LIKE wildcards so a user's search is treated as text.
+  if (search) query = query.ilike('name', `%${search.replace(/[%_\\]/g, '\\$&')}%`);
+  const {data, count, error} = await query.order('created_at', {ascending: false}).order('id', {ascending: false})
+    .range((page - 1) * pageSize, page * pageSize - 1);
+  if (error) {
+    console.error('[Tidalis artist directory] read failed', error.code);
+    return {shops: [], total: 0, unavailable: true};
+  }
+  return {
+    shops: (data ?? []).map(shop => ({
+      id: shop.id, slug: shop.slug, name: shop.name, description: shop.description ?? ''
+    })),
+    total: count ?? 0,
+    unavailable: false
+  };
+}

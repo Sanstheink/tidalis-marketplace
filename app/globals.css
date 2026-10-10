@@ -111,3 +111,48 @@
 .phase55-description{white-space:pre-wrap}
 @media(max-width:680px){.phase55-license{flex-direction:column}.live-detail-cover{min-height:280px;height:320px}}
 @media(prefers-reduced-motion:reduce){.live-product-card:hover .live-art-symbol{transition:none;transform:none}}
+
+/* Phase 5.6 — directory of public, active artist shops. Never uses private artwork files. */
+.artist-directory-page{max-width:1230px}
+.artist-directory-heading{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:30px}
+.artist-directory-heading h1{margin:16px 0 12px}
+.artist-directory-heading p{max-width:670px;margin:0}
+.artist-directory-heading>.btn{flex:none}
+.artist-directory-search{display:flex;align-items:center;gap:12px;max-width:700px;background:#1c1529;border:1px solid #594270;border-radius:14px;padding:8px 10px 8px 20px;margin:0 0 30px}
+.artist-directory-search label{color:#be99eb;display:flex}
+.artist-directory-search input{min-width:0;flex:1;color:#f6eeff;background:transparent;border:0;outline:none;font-size:14px}
+.artist-directory-search input::placeholder{color:#a697b8}
+.artist-directory-search:focus-within{border-color:#b889f3;box-shadow:0 0 0 3px #a77aff1c}
+.artist-search-clear{font-size:12px;color:#d2b7f4;white-space:nowrap;padding:8px}
+.artist-directory-count{font-size:12px;color:#baa9cb;margin-bottom:17px}.artist-directory-count strong{color:#f1e4ff}
+.artist-directory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:21px}
+.artist-directory-grid.artist-directory-single{grid-template-columns:minmax(0,660px)}
+.artist-directory-card{display:block;overflow:hidden;border-radius:17px;border:1px solid #544068;background:#1b1427;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;min-width:0}
+.artist-directory-card:hover{transform:translateY(-4px);border-color:#ad81ed;box-shadow:0 20px 45px #0a0418b8}
+.artist-directory-card:focus-visible{outline:3px solid #d5aeff;outline-offset:4px}
+.artist-directory-cover{height:156px;position:relative;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 40% 18%,#7047aa8a,#362349 53%,#20162d 100%)}
+.artist-directory-card:nth-child(3n+2) .artist-directory-cover{background:radial-gradient(ellipse at 62% 19%,#555cc17e,#332149 55%,#20162d)}
+.artist-directory-card:nth-child(3n+3) .artist-directory-cover{background:radial-gradient(ellipse at 40% 16%,#99527878,#392348 54%,#20162d)}
+.artist-directory-orbit{position:absolute;width:250px;height:250px;border:1px solid #dbc1ff50;transform:rotate(-25deg) scaleY(.65);border-radius:50%}
+.artist-directory-sparkle{position:absolute;top:26px;right:30px;color:#e5d3ffb8}
+.artist-directory-sigil{height:76px;width:76px;border-radius:22px;display:grid;place-items:center;z-index:1;background:#241332b8;border:1px solid #cb9bfa7a;box-shadow:0 0 50px #b87aff55;color:#e9d5ff;transform:rotate(-8deg)}
+.artist-directory-sigil svg{transform:rotate(8deg)}
+.artist-directory-info{padding:24px}
+.artist-directory-meta{font-size:9px;font-weight:750;color:#c49cfa;letter-spacing:.15em}.artist-directory-meta span{padding:0 7px}
+.artist-directory-title{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:12px 0 8px}.artist-directory-title h3{margin:0;font-size:22px;overflow-wrap:anywhere}.artist-directory-title svg{flex:none;color:#d0adff}
+.artist-directory-info p{font-size:12px;line-height:1.8;min-height:45px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:20px;overflow-wrap:anywhere}
+.artist-directory-visit{display:inline-flex;align-items:center;gap:6px;color:#dabdff;font-size:12px;font-weight:700}
+.artist-directory-featured .artist-directory-cover{height:205px}.artist-directory-featured .artist-directory-info p{min-height:0}
+.artist-directory-empty{padding:60px 22px;border:1px dashed #6a4a8c;border-radius:17px;background:radial-gradient(circle at center top,#2c1c41,#130e1d 75%);text-align:center;display:flex;align-items:center;flex-direction:column;gap:10px}
+.artist-directory-empty>svg{color:#c4a0fa}.artist-directory-empty h2{font-size:26px;margin:10px 0 0}.artist-directory-empty p{max-width:510px;margin:0 0 18px}
+.artist-directory-empty-symbol{display:grid;place-items:center;width:90px;height:90px;border-radius:50%;background:#442e5d;color:#dcc0ff}
+.artist-directory-pages{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:35px 0;color:#baabd0;font-size:12px}
+.artist-directory-pages a{display:inline-flex;align-items:center;gap:8px;color:#e2ccff;padding:12px 16px;background:#261b33;border:1px solid #604678;border-radius:10px}
+.artist-directory-pages a:hover{border-color:#ba90f0}
+.artist-home-grid{margin-top:10px}.artist-home-empty{background:#20172e;border:1px dashed #634a80;border-radius:14px;padding:26px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}.artist-home-empty svg{color:#bd94ee}.artist-home-empty p{margin:0;flex:1;min-width:170px;font-size:12px}
+@media(max-width:900px){.artist-directory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.artist-directory-grid{grid-template-columns:1fr}.artist-directory-heading{align-items:start;flex-direction:column}.artist-directory-heading>.btn{align-self:flex-start}.artist-directory-search{flex-wrap:wrap}.artist-directory-search input{flex-basis:calc(100% - 45px)}.artist-directory-search .btn{flex:1}.artist-directory-search .artist-search-clear{flex:0}.artist-directory-info{padding:20px}.artist-directory-heading h1{font-size:39px}}
+@media(prefers-reduced-motion:reduce){.artist-directory-card{transition:none}.artist-directory-card:hover{transform:none}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.artist-heading-link:hover,.artist-heading-link:focus-visible{text-decoration:underline;text-decoration-color:#9a6ce0;text-underline-offset:7px}

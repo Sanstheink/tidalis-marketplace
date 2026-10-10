@@ -13,7 +13,9 @@
     "test:otp-email": "node scripts/test-otp-email.cjs",
     "test:phase4": "node scripts/test-phase4.cjs",
     "test:phase5": "node scripts/test-phase5.cjs",
-    "test:phase5-5": "node scripts/test-phase55.cjs"
+    "test:phase5-5": "node scripts/test-phase55.cjs",
+    "test:artists": "node scripts/test-artists.cjs",
+    "test:artists-data": "node scripts/test-artists-data.cjs"
   },
   "dependencies": {
     "next": "^16.4.0",
