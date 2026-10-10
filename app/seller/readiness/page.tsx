@@ -24,8 +24,10 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
     client.from('shop_readiness_requests').select('id,status,review_note,submitted_at,reviewed_at').eq('shop_id',member.shop_id).maybeSingle(),
     client.rpc('tidalis_shop_readiness_blockers',{p_shop_id:member.shop_id})
   ]);
+  const {data:assurance}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  const elevated=assurance?.currentLevel==='aal2';
   const blockers=Array.isArray(readiness)?readiness as string[]:[];
-  const canSubmit=['owner','manager'].includes(member.role)&&shop?.status==='paused'&&blockers.length===0&&['needs_information','rejected',undefined,null].includes(request?.status);
+  const canSubmit=['owner','manager'].includes(member.role)&&shop?.status==='paused'&&elevated&&blockers.length===0&&['needs_information','rejected',undefined,null].includes(request?.status);
   return <div className="container page-pad phase5-page">
     <div className="page-heading"><div className="eyebrow">SELLER / SHOP READINESS</div><h1>Prepare your <em>store.</em></h1><p>เปิดร้านให้สาธารณะเห็นหลัง Admin ตรวจสอบเท่านั้น ระบบรับเงินและ Checkout ยังไม่เปิด</p></div>
     <p><Link href="/seller" className="text-link">← Seller Studio</Link> · <Link href="/seller/policies" className="text-link">นโยบายร้าน</Link> · <Link href="/seller/products" className="text-link">สินค้า</Link></p>
@@ -36,8 +38,9 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
       {shop?.status==='active'?<p role="status">ร้านเปิดให้เข้าชมแล้ว! <Link href={`/shops/${shop.slug}`} className="text-link">ดูหน้าร้านสาธารณะ →</Link></p>:null}
       <h3>เช็กลิสต์ความพร้อม</h3>
       {readinessError?<p>ยังประเมินความพร้อมไม่ได้</p>:blockers.length?<ul>{blockers.map(item=><li key={item}>○ {labels[item]||item}</li>)}</ul>:<p>✓ ผ่านข้อกำหนดด้านนโยบาย การอนุมัติร้าน และสินค้าเบื้องต้น</p>}
+      {!elevated&&<p><Link className="text-link" href="/mfa?next=%2Fseller%2Freadiness">ยืนยัน Authenticator ก่อนส่งคำขอเปิดร้านหรือพักร้าน →</Link></p>}
       {canSubmit&&!shopError&&!requestError&&!readinessError&&<form action={submitShopReadiness} className="phase4-action-form"><label>หมายเหตุถึง Admin (ไม่เกิน 1,500 ตัวอักษร)<textarea name="note" rows={3} maxLength={1500} placeholder="รายละเอียดความพร้อมร้านของคุณ"/></label><label className="checkbox-label"><input type="checkbox" required name="confirm"/> ยืนยันว่ารายละเอียดร้านและนโยบายผ่านการตรวจสอบแล้ว</label><button type="submit" className="btn btn-primary">ส่งคำขอเปิดร้านให้ Admin ตรวจ</button></form>}
-      {shop?.status==='active'&&['owner','manager'].includes(member.role)&&<form action={pauseOwnShopVisibility} className="phase4-action-form"><h3>พักหน้าร้านชั่วคราว</h3><p>ร้านและสินค้าที่เผยแพร่จะหายจากหน้าสาธารณะ แต่ลิงก์ภาพ Preview ที่ออกไปก่อนหน้าอาจใช้ได้จนหมดอายุ 5 นาที</p><label>เหตุผลการพักร้าน (อย่างน้อย 12 ตัวอักษร)<textarea name="reason" rows={3} required minLength={12} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" value="yes" name="confirm" required/>ยืนยันพักหน้าร้าน และยอมรับว่าการเปิดอีกครั้งต้องผ่าน Admin</label><button type="submit" className="btn btn-outline">พักหน้าร้านสาธารณะ</button></form>}
+      {elevated&&shop?.status==='active'&&['owner','manager'].includes(member.role)&&<form action={pauseOwnShopVisibility} className="phase4-action-form"><h3>พักหน้าร้านชั่วคราว</h3><p>ร้านและสินค้าที่เผยแพร่จะหายจากหน้าสาธารณะ แต่ลิงก์ภาพ Preview ที่ออกไปก่อนหน้าอาจใช้ได้จนหมดอายุ 5 นาที</p><label>เหตุผลการพักร้าน (อย่างน้อย 12 ตัวอักษร)<textarea name="reason" rows={3} required minLength={12} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" value="yes" name="confirm" required/>ยืนยันพักหน้าร้าน และยอมรับว่าการเปิดอีกครั้งต้องผ่าน Admin</label><button type="submit" className="btn btn-outline">พักหน้าร้านสาธารณะ</button></form>}
       {request?.status==='submitted'&&<p>คำขออยู่ระหว่างตรวจ กรุณารอ Admin ยืนยัน</p>}
     </div>
   </div>;

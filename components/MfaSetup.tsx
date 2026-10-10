@@ -36,7 +36,7 @@ export function MfaSetup({next='/workspace'}:{next?:string}){
   setLoading(false);if(verifyError){setError(verifyError.message);return}
   router.replace(destination);router.refresh();
  }
- return <div className="simple-form"><ShieldCheck size={32}/><h2>Authenticator App</h2><p>ผู้ซื้อไม่จำเป็นต้องเปิด MFA เพื่อเข้าสู่ระบบ แต่สามารถเลือกเปิดเพื่อเพิ่มความปลอดภัยได้ หากคุณเป็น Seller หรือ Admin ระบบจะขอรหัสจากแอป Authenticator เมื่อเซสชันยังไม่ถึง AAL2</p>
+ return <div className="simple-form"><ShieldCheck size={32}/><h2>Authenticator App</h2><p>ผู้ซื้อไม่จำเป็นต้องเปิด MFA เพื่อเข้าสู่ระบบ แต่สามารถเลือกเปิดเพื่อเพิ่มความปลอดภัยได้ Seller ต้องลงทะเบียน Authenticator ที่ยืนยันแล้ว และสามารถเข้า Studio ที่ AAL1 ได้ ส่วนงานอนุมัติ/การเงินและ Admin ต้องยืนยัน AAL2</p>
  {loading?<p>กำลังตรวจสอบ MFA...</p>:!factorId?<button className="btn btn-primary wide" onClick={enroll}>สร้าง QR สำหรับเปิด MFA</button>:<>
  {!hasVerifiedFactor&&<div><p>หากเคยลงทะเบียนแล้วแต่ไม่มี QR ให้เริ่มตั้งค่า Factor ที่ยังไม่ยืนยันใหม่ได้</p>{!qr&&<button type="button" className="btn btn-outline" onClick={resetUnverified} disabled={loading}>เริ่มตั้งค่า MFA ใหม่</button>}</div>}
  {qr&&<div style={{background:'white',padding:15,display:'inline-flex',margin:'15px 0'}}><img src={qr} alt="สแกน QR ด้วยแอป Authenticator" width={200} height={200}/></div>}

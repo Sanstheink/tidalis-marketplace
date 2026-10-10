@@ -28,12 +28,28 @@ export async function requirePlatformAdmin(){
   return {client,user};
 }
 
+/**
+ * Seller Studio routine access: an approved shop member with a VERIFIED TOTP
+ * enrollment may use AAL1. Enrollment is not the same as an elevated session.
+ * Postgres independently checks live TOTP enrollment for AAL1 RLS/RPC paths.
+ */
 export async function requireSeller(){
   const {client,user}=await requireUser('/seller');
-  const {data,error}=await client.from('shop_members').select('shop_id,role,shops!inner(status,name)').eq('user_id',user.id).in('shops.status',['active','paused']).limit(1);
-  if(error||!data?.length)redirect('/sell/application');
-  await requireMfa(client,'/seller');
-  return {client,user,member:data[0]};
+  // Lookup own membership first; self-read of shop_members never requires AAL2.
+  const {data:members,error:memberError}=await client.from('shop_members')
+    .select('shop_id,role').eq('user_id',user.id).limit(10);
+  if(memberError||!members?.length)redirect('/sell/application');
+  const {data:factors,error:factorError}=await client.auth.mfa.listFactors();
+  if(factorError)redirect('/account?denied=mfa-unavailable');
+  if(!factors?.totp?.some(f=>f.status==='verified'))
+    redirect('/mfa?next=%2Fseller');
+  const ids=members.map(m=>m.shop_id);
+  const {data:shops,error:shopError}=await client.from('shops')
+    .select('id,name,status').in('id',ids).in('status',['active','paused']).limit(10);
+  if(shopError||!shops?.length)redirect('/sell/application');
+  const member=members.find(m=>shops.some(shop=>shop.id===m.shop_id));
+  if(!member)redirect('/sell/application');
+  return {client,user,member};
 }
 
 export async function getWorkspaceAccess(client:NonNullable<Awaited<ReturnType<typeof supabaseServer>>>,userId:string){

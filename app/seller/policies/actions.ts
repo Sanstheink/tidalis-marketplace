@@ -1,7 +1,7 @@
 'use server';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {requireSeller} from '@/lib/auth';
+import {requireSeller,requireMfa} from '@/lib/auth';
 
 const types=['refund','delivery','license','other'];
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -27,6 +27,7 @@ export async function saveShopPolicy(formData:FormData){
 
 export async function submitShopPolicy(formData:FormData){
   const {client,member}=await requireSeller();
+  await requireMfa(client,'/seller/policies');
   if(!['owner','manager'].includes(member.role))redirect('/seller/policies?result=role-denied');
   const id=formData.get('id');
   if(typeof id!=='string'||!uuid.test(id))redirect('/seller/policies?result=invalid');

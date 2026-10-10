@@ -18,7 +18,8 @@
     "test:artists-data": "node scripts/test-artists-data.cjs",
     "test:phase5-7": "node scripts/test-phase57.cjs",
     "test:phase5-7-1": "node scripts/test-phase571.cjs",
-    "test:phase5-8": "node scripts/test-phase58.cjs"
+    "test:phase5-8": "node scripts/test-phase58.cjs",
+    "test:seller-step-up": "node scripts/test-seller-step-up.cjs"
   },
   "dependencies": {
     "next": "^16.4.0",

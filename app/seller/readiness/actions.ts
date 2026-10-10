@@ -1,10 +1,11 @@
 'use server';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {requireSeller} from '@/lib/auth';
+import {requireSeller,requireMfa} from '@/lib/auth';
 
 export async function submitShopReadiness(form:FormData){
   const {client,member}=await requireSeller();
+  await requireMfa(client,'/seller/readiness');
   if(!['owner','manager'].includes(member.role)) redirect('/seller/readiness?notice=forbidden');
   if(form.get('confirm')!=='on')redirect('/seller/readiness?notice=failed');
   const note=String(form.get('note')||'').trim().slice(0,1501);
@@ -17,6 +18,7 @@ export async function submitShopReadiness(form:FormData){
 
 export async function pauseOwnShopVisibility(form:FormData){
   const {client,member}=await requireSeller();
+  await requireMfa(client,'/seller/readiness');
   if(!['owner','manager'].includes(member.role)||form.get('confirm')!=='yes')
     redirect('/seller/readiness?notice=forbidden');
   const reason=String(form.get('reason')||'').trim();

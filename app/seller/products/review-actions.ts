@@ -1,10 +1,11 @@
 'use server';
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
-import {requireSeller} from '@/lib/auth';
+import {requireSeller,requireMfa} from '@/lib/auth';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function changeSellerProductReview(form:FormData){
   const {client,member}=await requireSeller();
+  await requireMfa(client,'/seller/products');
   if(!['owner','manager','artist'].includes(member.role))redirect('/seller/products?notice=read-only');
   const id=String(form.get('id')||'');const action=String(form.get('action')||'');
   if(!uuid.test(id)||!['submit','withdraw','archive'].includes(action))redirect('/seller/products?notice=invalid');

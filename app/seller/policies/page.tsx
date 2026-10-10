@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {requireSeller} from '@/lib/auth';
 import {saveShopPolicy,submitShopPolicy} from './actions';
 import {shopPolicyTypes,shopPolicyLabel} from '@/lib/policy-labels';
@@ -8,7 +9,7 @@ const BUCKET='tidalis-policy-documents';
 const messages:Record<string,string>={
   invalid:'กรุณาตรวจประเภทและข้อความ Draft (1–30,000 ตัวอักษร)',
   'role-denied':'เฉพาะเจ้าของหรือผู้จัดการร้านเท่านั้นที่แก้ไขนโยบายได้',
-  'save-failed':'บันทึกไม่สำเร็จ ตรวจสิทธิ์ MFA, Migration 006/007 และสถานะ Draft (รายละเอียดอยู่ใน Vercel Logs)',
+  'save-failed':'บันทึกไม่สำเร็จ ตรวจสิทธิ์ผู้ขาย การลงทะเบียน MFA และ Migration 009 (รายละเอียดอยู่ใน Vercel Logs)',
   'submit-failed':'ส่งตรวจไม่สำเร็จ กรุณาตรวจสถานะนโยบายและ MFA',
   saved:'บันทึกฉบับร่างแล้ว ยังไม่เผยแพร่',submitted:'ส่งนโยบายให้ Admin ตรวจสอบแล้ว',
 };
@@ -18,6 +19,8 @@ export default async function SellerPolicies({searchParams}:{searchParams:Promis
     .select('id,policy_type,version,content,status,source_type,document_path,document_name,document_size,created_at,review_note,review_outcome,reviewed_at,published_at')
     .eq('shop_id',member.shop_id).order('created_at',{ascending:false}).limit(120);
   const {result}=await searchParams;
+  const {data:assurance}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+  const elevated=assurance?.currentLevel==='aal2';
   const canEdit=['owner','manager'].includes(member.role);
   const latestPublished=new Set((data||[]).filter(p=>p.status==='published').map(p=>p.policy_type));
   const existing=(data||[]).map(p=>({id:p.id,policy_type:p.policy_type,status:p.status,source_type:p.source_type,content:p.content}));
@@ -55,7 +58,8 @@ export default async function SellerPolicies({searchParams}:{searchParams:Promis
             <textarea id={`draft-${p.id}`} name="content" rows={8} minLength={1} maxLength={30000} defaultValue={p.content} required/>
             <button className="btn btn-outline" type="submit">บันทึกการแก้ไข</button>
           </form>}
-          <form action={submitShopPolicy}><input type="hidden" name="id" value={p.id}/><button className="btn btn-primary" type="submit">ส่งให้ Admin ตรวจสอบ</button></form>
+          {!elevated&&<p><Link className="text-link" href="/mfa?next=%2Fseller%2Fpolicies">ยืนยัน Authenticator ก่อนส่ง Admin ตรวจ →</Link></p>}
+          <form action={submitShopPolicy}><input type="hidden" name="id" value={p.id}/><button className="btn btn-primary" type="submit" disabled={!elevated}>ส่งให้ Admin ตรวจสอบ</button></form>
         </div>}
       </article>)}</div>:!error&&<div className="empty-state">ยังไม่มีนโยบายร้าน เริ่มสร้าง Refund, Delivery และ License Policy</div>}
     </section>

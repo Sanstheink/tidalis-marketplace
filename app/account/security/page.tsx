@@ -21,7 +21,7 @@ export default async function AccountSecurity(){
           <Link className="btn btn-outline" href="/mfa?next=%2Faccount%2Fsecurity">{!enrolled?'เลือกเปิด MFA':'ยืนยัน MFA'} <ArrowRight size={16}/></Link>
         </>}
       </div>
-      <div className="preview-panel"><h3><LockKeyhole size={22}/> สิทธิ์ Seller และ Admin</h3><p>การเข้า Seller Studio และ Admin Console ต้องมีสิทธิ์ตามบทบาท และยืนยัน MFA ระดับ AAL2 ทุกครั้งที่เซสชันยังไม่ถึงระดับดังกล่าว</p><Link className="btn btn-outline" href="/workspace">ไปหน้า Workspace <ArrowRight size={16}/></Link></div>
+      <div className="preview-panel"><h3><LockKeyhole size={22}/> สิทธิ์ Seller และ Admin</h3><p>Seller ต้องลงทะเบียน MFA ครั้งแรก จากนั้นเข้าสตูดิโอด้วย AAL1 ได้; การส่งตรวจ/จัดการเงินต้อง AAL2 และ Admin Console ยังต้อง AAL2</p><Link className="btn btn-outline" href="/workspace">ไปหน้า Workspace <ArrowRight size={16}/></Link></div>
     </div>
     <div className="info-panel">หากคุณเลือกเปิด MFA เอง Supabase อาจขอให้ยืนยันด้วย Authenticator ก่อนเปลี่ยนอีเมลหรือรหัสผ่าน แม้คุณจะเป็นผู้ซื้อก็ตาม</div>
   </div>;
