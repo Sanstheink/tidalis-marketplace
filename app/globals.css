@@ -173,3 +173,11 @@
 .policy-version-list summary{cursor:pointer;padding:10px 0}
 .phase4-policy-body{white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:700px){.policy-readiness-grid{grid-template-columns:1fr}.policy-version-head{align-items:flex-start;flex-direction:column}}
+
+/* Phase 5.7.1: private PDF and text authoring */
+.policy-mode-switch{display:flex;flex-wrap:wrap;gap:14px;margin:4px 0 12px}
+.policy-mode-switch label{display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid rgba(180,145,213,.25);border-radius:12px;cursor:pointer}
+.policy-mode-switch input{accent-color:#a77aff}
+.policy-manager-page input[type=file]{width:100%;max-width:100%;padding:12px;border:1px dashed rgba(180,145,213,.44);border-radius:12px}
+.policy-manager-page button:disabled{opacity:.5;cursor:not-allowed}
+.policy-version-card a.btn{margin:8px 0 8px 12px;max-width:100%;overflow-wrap:anywhere}

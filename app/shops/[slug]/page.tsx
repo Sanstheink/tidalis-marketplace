@@ -17,7 +17,7 @@ export default async function ShopPage({params}:{params:Promise<{slug:string}>})
     {policies.length?<div className="policy-version-list">{policies.map(p=><article className="phase4-card" key={p.id}>
       <h3>{shopPolicyLabel(p.policy_type)}</h3>
       <p>เวอร์ชัน {p.version} · เผยแพร่ {p.published_at?new Date(p.published_at).toLocaleDateString('th-TH'):'—'}</p>
-      <details><summary>อ่านนโยบายของร้าน</summary><div className="phase4-policy-body">{p.content}</div></details>
+      {p.source_type==='pdf'?<p>{p.document_url?<a className="btn btn-outline" href={p.document_url} target="_blank" rel="noopener noreferrer">ดาวน์โหลด PDF: {p.document_name||'Shop Policy'} ↗</a>:<span>ไม่สามารถเปิดเอกสารได้ชั่วคราว</span>}</p>:<details><summary>อ่านนโยบายของร้าน</summary><div className="phase4-policy-body">{p.content}</div></details>}
     </article>)}</div>:<div className="empty-state">ร้านนี้ยังไม่เผยแพร่นโยบายของร้าน การสั่งซื้อยังไม่เปิดให้บริการ</div>}
   </section></div>;
 }

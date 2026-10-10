@@ -13,7 +13,7 @@ export async function saveShopPolicy(formData:FormData){
   const content=formData.get('content');
   const draftId=formData.get('draft_id');
   if(typeof type!=='string'||!types.includes(type)||typeof content!=='string'||
-    content.trim().length<200||content.trim().length>30000||
+    content.trim().length<1||content.trim().length>30000||
     (typeof draftId==='string'&&draftId!==''&&!uuid.test(draftId)))
     redirect('/seller/policies?result=invalid');
   const {error}=await client.rpc('save_shop_policy_draft',{
