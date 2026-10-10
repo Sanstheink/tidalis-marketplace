@@ -49,6 +49,32 @@ function normalizeProduct(row: RecordLike): PublicProduct | null {
   };
 }
 
+// Images are previews explicitly attached to PUBLISHED products only. Never sign deliverable paths.
+// This works with anon RLS from Migration 008; failures do not leak private paths.
+async function withPublicPreviews(products:PublicProduct[],client:NonNullable<ReturnType<typeof publicClient>>):Promise<PublicProduct[]> {
+  if(!products.length)return products;
+  const {data,error}=await client.from('product_files').select('product_id,file_path')
+    .in('product_id',products.map(p=>p.id)).eq('is_delivery_file',false)
+    .order('created_at',{ascending:true});
+  if(error){console.error('[Tidalis public previews] metadata unavailable',error.code);return products}
+  const first=new Map<string,string>();
+  for(const row of data||[]){
+    if(first.has(row.product_id))continue;
+    if(!row.file_path.startsWith('shops/')||!row.file_path.includes('/previews/'))continue;
+    first.set(row.product_id,row.file_path);
+  }
+  const paths=[...first.values()];
+  if(!paths.length)return products;
+  const {data:signed,error:signError}=await client.storage.from('tidalis-product-files').createSignedUrls(paths,300);
+  if(signError){console.error('[Tidalis public previews] signing unavailable',signError.message);return products}
+  const urls=new Map<string,string>();
+  [...first.entries()].forEach(([productId,path])=>{
+    const result=signed?.find(s=>s.path===path);
+    if(result?.signedUrl)urls.set(productId,result.signedUrl);
+  });
+  return products.map(p=>({...p,previewUrl:urls.get(p.id)||null}));
+}
+
 export async function getPublicProducts(options: {limit?:number; type?:PublicProductType; shopId?:string} = {}): Promise<PublicProduct[]> {
   const client = publicClient();
   if (!client) return [];
@@ -61,10 +87,11 @@ export async function getPublicProducts(options: {limit?:number; type?:PublicPro
   if (options.shopId) query = query.eq('shop_id',options.shopId);
   const {data,error} = await query;
   if (error) { console.error('[Tidalis public catalog] read failed', error.code); return []; }
-  return (data ?? []).flatMap(record => {
+  const visible=(data ?? []).flatMap(record => {
     const product = normalizeProduct(record as unknown as RecordLike);
     return product ? [product] : [];
   });
+  return withPublicPreviews(visible,client);
 }
 
 export async function getPublicProductByRoute(routeSlug: string): Promise<PublicProduct | null> {
@@ -77,7 +104,9 @@ export async function getPublicProductByRoute(routeSlug: string): Promise<Public
     .eq('id',match[2]).eq('slug',match[1])
     .eq('status','published').eq('shop.status','active').maybeSingle();
   if (error) { console.error('[Tidalis public product] read failed',error.code); return null; }
-  return data ? normalizeProduct(data as unknown as RecordLike) : null;
+  const normalized=data ? normalizeProduct(data as unknown as RecordLike) : null;
+  if(!normalized)return null;
+  return (await withPublicPreviews([normalized],client))[0]||null;
 }
 
 export async function getPublicShop(slug: string): Promise<PublicShop | null> {

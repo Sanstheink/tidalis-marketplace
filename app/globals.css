@@ -181,3 +181,8 @@
 .policy-manager-page input[type=file]{width:100%;max-width:100%;padding:12px;border:1px dashed rgba(180,145,213,.44);border-radius:12px}
 .policy-manager-page button:disabled{opacity:.5;cursor:not-allowed}
 .policy-version-card a.btn{margin:8px 0 8px 12px;max-width:100%;overflow-wrap:anywhere}
+
+/* Phase 5.8: published cover previews remain inside artwork frames. */
+.phase58-art-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.live-art-symbol,.live-detail-sigil{position:relative;z-index:1}
+.live-product-art .art-caption,.live-product-art .art-ribbon,.live-detail-cover .art-caption{z-index:2}

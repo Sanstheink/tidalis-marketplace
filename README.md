@@ -93,3 +93,7 @@ See [PHASE4_PRODUCTION_GUIDE.md](PHASE4_PRODUCTION_GUIDE.md) for safe deployment
 ## Phase 5.7 — Platform & Shop Policies
 
 See [PHASE5_7_POLICY_MANAGEMENT.md](PHASE5_7_POLICY_MANAGEMENT.md) for installation, read-only Production preflight, isolated Staging migration and policy review workflow. **Never use placeholder legal terms or direct SQL to open a Production shop.**
+
+### Phase 5.8 — readiness and reviewed publication
+
+See [`PHASE5_8_SHOP_READINESS_PRODUCT_PUBLISHING.md`](PHASE5_8_SHOP_READINESS_PRODUCT_PUBLISHING.md). Migration `008_shop_readiness_product_publishing.sql` requires `001` through `007` and is **not** automatically deployed; test first on isolated Staging. Do not merge the app into Production before DB changes are planned and verified.

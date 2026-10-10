@@ -5,7 +5,7 @@ export type PublicProduct = {
   productType: PublicProductType; pricingMode: 'quote' | 'fixed';
   shopId: string; shopSlug: string; shopName: string;
   workType: string; exclusive: boolean; stock: number | null;
-  licenses: PublicLicense[];
+  licenses: PublicLicense[]; previewUrl?: string | null;
 };
 export type PublicShop = { id: string; slug: string; name: string; description: string };
 

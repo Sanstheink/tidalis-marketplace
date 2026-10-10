@@ -19,13 +19,13 @@ export default async function ProductDetail({params}:{params:Promise<{slug:strin
   return <div className="container page-pad">
     <div className="breadcrumb"><Link href="/">หน้าแรก</Link><span>/</span><Link href="/shop">สินค้า</Link><span>/</span><span>{product.name}</span></div>
     <div className="product-detail-grid">
-      <div className="gallery"><div className={`live-detail-cover product-art live-product-${product.productType}`}><span className="live-detail-sigil" aria-hidden="true">✧</span><span className="art-caption">TIDALIS · {product.productType.replace('_',' ').toUpperCase()}</span></div><p className="gallery-disclaimer">ภาพ Placeholder — ไฟล์ต้นฉบับของผู้ขายยังคงเป็น Private และไม่ได้เปิดให้สาธารณะเข้าถึง</p></div>
+      <div className="gallery"><div className={`live-detail-cover product-art live-product-${product.productType}`}>{product.previewUrl?<img src={product.previewUrl} alt={`ภาพตัวอย่างของ ${product.name}`} className="phase58-art-image"/>:<span className="live-detail-sigil" aria-hidden="true">✧</span>}<span className="art-caption">TIDALIS · {product.productType.replace('_',' ').toUpperCase()}</span></div><p className="gallery-disclaimer">ภาพ Preview ที่ได้รับอนุญาตให้แสดง · ไฟล์ต้นฉบับของผู้ขายยังคงเป็น Private ไม่เปิดให้สาธารณะดาวน์โหลด</p></div>
       <div className="purchase-panel"><div className="eyebrow">{product.shopName.toUpperCase()} / {product.productType.replace('_',' ').toUpperCase()}</div>
         <h1>{product.name}</h1><p>{product.workType}</p>
         <div className="purchase-divider"/><div className="form-label">License และราคาจากร้านผู้ขาย</div>
         <div className="phase55-license-list">{product.licenses.map(license=><div className="phase55-license" key={license.usageType}><div><strong>{license.usageType==='personal'?'Personal Use':'Commercial Use'}</strong><p>{license.terms||'โปรดตรวจสอบเงื่อนไขสิทธิ์การใช้งานก่อนสั่งซื้อ'}</p></div><strong>{product.pricingMode==='quote'?'เริ่มต้น ':''}{publicPrice(license.priceMinor)}</strong></div>)}</div>
         {product.exclusive&&<p className="phase55-exclusivity"><Info size={16}/> Exclusive artwork · สต็อก {product.stock ?? 0} (ยังไม่สามารถจองได้)</p>}
-        <div className="phase55-disabled-purchase"><ShieldCheck size={20}/><div><strong>ระบบสั่งซื้ออยู่ระหว่างพัฒนา</strong><p>Phase 5.5 แสดงสินค้าที่เผยแพร่จากฐานข้อมูลเท่านั้น ยังไม่เปิดรับเงิน ยืนยันสลิป หรือสร้างออเดอร์</p></div></div>
+        <div className="phase55-disabled-purchase"><ShieldCheck size={20}/><div><strong>ระบบสั่งซื้ออยู่ระหว่างพัฒนา</strong><p>Phase 5.8 แสดงเฉพาะสินค้าที่ Admin อนุมัติ ยังไม่เปิดรับเงิน ยืนยันสลิป หรือสร้างออเดอร์</p></div></div>
         <Link className="btn btn-outline wide" href={`/shops/${product.shopSlug}`}>ไปยังร้านผู้ขาย <ArrowRight size={16}/></Link>
       </div>
     </div>

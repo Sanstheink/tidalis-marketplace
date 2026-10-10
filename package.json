@@ -1,6 +1,6 @@
 {
   "name": "tidalis-marketplace",
-  "version": "0.5.0",
+  "version": "0.5.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,7 +17,8 @@
     "test:artists": "node scripts/test-artists.cjs",
     "test:artists-data": "node scripts/test-artists-data.cjs",
     "test:phase5-7": "node scripts/test-phase57.cjs",
-    "test:phase5-7-1": "node scripts/test-phase571.cjs"
+    "test:phase5-7-1": "node scripts/test-phase571.cjs",
+    "test:phase5-8": "node scripts/test-phase58.cjs"
   },
   "dependencies": {
     "next": "^16.4.0",
