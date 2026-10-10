@@ -88,3 +88,8 @@ See [PHASE4_PRODUCTION_GUIDE.md](PHASE4_PRODUCTION_GUIDE.md) for safe deployment
 ## Phase 5 — Seller Catalog Drafts (not live sales)
 
 ดู `PHASE5_SELLER_CATALOG_GUIDE.md` สำหรับวิธีอัปเดตฐานข้อมูล/โค้ดและทดสอบบน Staging. Phase 5 เพิ่มหน้า `/seller/products/new`, `/seller/products/[id]`, Private Storage สำหรับ Seller และหน้า Public UI Preview `/preview/phase5` (ข้อมูลตัวอย่างเท่านั้น). **ยังไม่เปิดสินค้า/รับเงินหรือให้ผู้ซื้อดาวน์โหลด**.
+
+
+## Phase 5.7 — Platform & Shop Policies
+
+See [PHASE5_7_POLICY_MANAGEMENT.md](PHASE5_7_POLICY_MANAGEMENT.md) for installation, read-only Production preflight, isolated Staging migration and policy review workflow. **Never use placeholder legal terms or direct SQL to open a Production shop.**

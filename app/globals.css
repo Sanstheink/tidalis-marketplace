@@ -156,3 +156,20 @@
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 .artist-heading-link:hover,.artist-heading-link:focus-visible{text-decoration:underline;text-decoration-color:#9a6ce0;text-underline-offset:7px}
+
+/* Phase 5.7 — Policy Manager & Review (additive styles) */
+.policy-manager-page .phase4-card{margin-block:20px}
+.policy-readiness{margin:22px 0;padding:24px;border:1px solid var(--border,rgba(190,160,235,.19));border-radius:18px;background:rgba(118,76,160,.07)}
+.policy-readiness h2{margin:0 0 16px}
+.policy-readiness-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.policy-readiness-item{padding:16px;border:1px solid rgba(181,147,213,.23);border-radius:13px;display:flex;flex-direction:column;gap:7px}
+.policy-readiness-item span{opacity:.75;font-size:.83rem}
+.policy-version-list{display:grid;grid-template-columns:1fr;gap:16px}
+.policy-version-card{min-width:0}
+.policy-version-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.policy-version-head h3{margin:0}
+.policy-draft-actions{margin-top:16px;display:grid;gap:20px}
+.shop-public-policies{scroll-margin-top:110px}
+.policy-version-list summary{cursor:pointer;padding:10px 0}
+.phase4-policy-body{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:700px){.policy-readiness-grid{grid-template-columns:1fr}.policy-version-head{align-items:flex-start;flex-direction:column}}
