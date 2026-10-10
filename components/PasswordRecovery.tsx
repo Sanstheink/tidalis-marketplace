@@ -28,8 +28,25 @@ export function PasswordRecovery({mode}:{mode:'request'|'reset'}){
         if(password.length<8||password!==confirm){setStatus('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรและตรงกันทั้งสองช่อง');return}
         const {data:{user},error:authError}=await client.auth.getUser();
         if(authError||!user){setStatus('เซสชันยืนยันหมดอายุ กรุณาขอรหัสยืนยันใหม่');return}
+        // Supabase rejects password/email updates at AAL1 if a verified MFA factor exists.
+        // An OTP session does not automatically satisfy TOTP MFA. Never bypass this check.
+        const {data:assurance,error:assuranceError}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+        if(assuranceError)throw assuranceError;
+        if(assurance?.nextLevel==='aal2'&&assurance.currentLevel!=='aal2'){
+          setStatus('บัญชีนี้เปิด MFA อยู่ กรุณายืนยันรหัสจากแอป Authenticator ก่อนตั้งรหัสผ่านใหม่ (ไม่ใช่ Email OTP)');
+          router.push('/mfa?next=%2Freset-password');
+          return;
+        }
         const {error}=await client.auth.updateUser({password});
-        if(error)throw error;
+        if(error){
+          // AAL can change when sessions refresh; provide an explicit recovery route.
+          if(/aal2|mfa.*(required|enabled)/i.test(error.message)){
+            setStatus('ต้องยืนยัน MFA ด้วยแอป Authenticator ก่อนเปลี่ยนรหัสผ่าน');
+            router.push('/mfa?next=%2Freset-password');
+            return;
+          }
+          throw error;
+        }
         await client.auth.signOut();setDone(true);router.refresh();setStatus('เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบอีกครั้ง');
       }
     }catch(err){setStatus(err instanceof Error?err.message:'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง')}

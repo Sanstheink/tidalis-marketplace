@@ -10,7 +10,7 @@ import {OtpCodeInput} from '@/components/OtpCodeInput';
 
 type Flow='signup'|'login'|'recovery';
 const FLOW:{[F in Flow]:{title:string;description:string;action:string}}={
-  signup:{title:'ยืนยันอีเมลของคุณ',description:'กรอกรหัสจากอีเมลเพื่อเปิดใช้งานบัญชี Tidalis',action:'ยืนยันและเข้าสู่ระบบ'},
+  signup:{title:'ยืนยันอีเมลของคุณ',description:'ยืนยันรหัส OTP แล้วใช้บัญชีผู้ซื้อได้ทันที ไม่ต้องเปิด MFA (เว้นแต่คุณเลือกเปิดเอง)',action:'ยืนยันและเข้าสู่ระบบ'},
   login:{title:'ตรวจสอบรหัสเข้าสู่ระบบ',description:'เราได้ส่งรหัสยืนยันสำหรับเข้าสู่ระบบไปยังอีเมลที่ระบุ',action:'ยืนยันและเข้าสู่ระบบ'},
   recovery:{title:'ยืนยันการกู้คืนบัญชี',description:'กรอกรหัสที่ได้รับเพื่อไปตั้งรหัสผ่านใหม่',action:'ยืนยันและตั้งรหัสผ่านใหม่'}
 };

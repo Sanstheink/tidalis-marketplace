@@ -58,7 +58,8 @@ export function AuthForm({mode,next='/account',initialError}:{mode:'login'|'regi
       <Link href="/" className="auth-logo"><img src="/brand/tidalis-horizontal.png" alt="Tidalis"/></Link>
       <div className="eyebrow">YOUR CREATIVE SPACE</div>
       <h1>{mode==='login'?'Welcome back.':'Create your account.'}</h1>
-      <p>{mode==='login'?'เข้าสู่ระบบด้วยรหัสผ่าน หรือรับรหัส OTP ทางอีเมล':'สมัครสมาชิกในฐานะผู้ซื้อ และส่งคำขอเปิดร้านได้ภายหลัง'}</p>
+      <p>{mode==='login'?'เข้าสู่ระบบด้วยอีเมลและรหัสผ่าน หรือรับรหัส OTP ทางอีเมล':'สมัครสมาชิกเป็นผู้ซื้อได้ทันทีหลังยืนยันอีเมล โดยไม่ต้องตั้งค่า MFA'}</p>
+      <div className="info-panel" role="note">MFA เป็นทางเลือกสำหรับบัญชีผู้ซื้อ แต่จำเป็นก่อนเข้า Seller Studio หรือ Admin Console ตามสิทธิ์ที่ได้รับ</div>
       {!client&&<div className="form-message warning">ยังไม่ได้เชื่อม Supabase Auth</div>}
       {message&&<div role="alert" className="form-message"><AlertCircle size={16}/>{message}</div>}
       {mode==='login'&&<div className="auth-mode-switch" role="group" aria-label="เลือกวิธีเข้าสู่ระบบ">
