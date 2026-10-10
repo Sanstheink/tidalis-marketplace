@@ -83,3 +83,8 @@ Tests: `npm run check:source && npm run test:phase2 && npm run test:phase3 && np
 ## Phase 4 — Seller onboarding & admin review
 
 See [PHASE4_PRODUCTION_GUIDE.md](PHASE4_PRODUCTION_GUIDE.md) for safe deployment, migration and policy publication. Run `npm run test:phase4` for structural checks; do **not** apply SQL to production without a staging clone/backup and legal approval.
+
+
+## Phase 5 — Seller Catalog Drafts (not live sales)
+
+ดู `PHASE5_SELLER_CATALOG_GUIDE.md` สำหรับวิธีอัปเดตฐานข้อมูล/โค้ดและทดสอบบน Staging. Phase 5 เพิ่มหน้า `/seller/products/new`, `/seller/products/[id]`, Private Storage สำหรับ Seller และหน้า Public UI Preview `/preview/phase5` (ข้อมูลตัวอย่างเท่านั้น). **ยังไม่เปิดสินค้า/รับเงินหรือให้ผู้ซื้อดาวน์โหลด**.

@@ -1,6 +1,6 @@
 {
   "name": "tidalis-marketplace",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,7 +11,8 @@
     "test:phase2": "node scripts/test-phase2.cjs",
     "test:phase3": "node scripts/test-phase3.cjs",
     "test:otp-email": "node scripts/test-otp-email.cjs",
-    "test:phase4": "node scripts/test-phase4.cjs"
+    "test:phase4": "node scripts/test-phase4.cjs",
+    "test:phase5": "node scripts/test-phase5.cjs"
   },
   "dependencies": {
     "next": "^16.4.0",
