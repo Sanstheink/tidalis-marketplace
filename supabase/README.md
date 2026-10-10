@@ -10,3 +10,7 @@
 8. Define finance documents and VAT rule validation with a Thailand tax professional. A generated PDF is not automatically an approved e-Tax invoice.
 9. Legal policy pages are drafting placeholders and must not be used as binding agreements before approved publication with versioned acceptance.
 10. Add automated RLS integration tests with at least 2 shops and 2 buyers to verify isolation before any production launch.
+
+### Phase 3 (new)
+
+Review and apply `003_phase3_auth_hardening.sql` **after** 001 and 002 in a STAGING project. Its role helper replacements intentionally require `auth.jwt()->>'aal' = 'aal2'` for seller-private and platform-admin RLS operations, including the seller-approval RPC. They prevent raw PostgREST requests with an AAL1 session from bypassing MFA just because a screen hides a button. The user's own role and membership discovery remain readable via existing owner-only SELECT RLS so the workspace picker can show a login user's available spaces. Read `PHASE3_SUPABASE_VERCEL.md` before applying.

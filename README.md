@@ -64,3 +64,32 @@ Open `http://localhost:3000` and explore `/`, `/shop`, `/products/violet-moon-ch
 ## Repo deployment
 
 No GitHub repositories, Vercel teams/projects or Supabase projects were returned by the connected accounts during initial setup. The deliverable is therefore a **downloadable source project**, not a deployed or connected production website. You can create a repository and connect it to Vercel when ready.
+
+## Phase 2 — storefront / Vercel preview
+
+Phase 2 expands the product gallery, seller-defined license price selection, quantity and exclusive-product limits, multi-seller cart grouping, and separate fixed-price versus commission brief checkout preview. Checkout confirmation remains **disabled** pending authenticated backend, seller policy acceptance snapshots, inventory reservation, and payment verification. The mock catalog contains two fictional seller shops.
+
+See [PHASE2_VERCEL.md](PHASE2_VERCEL.md) for GitHub/Vercel preview workflows, caveats, and testing instructions. Run `npm run test:phase2` for fixture-level cart tests.
+
+## Phase 3 — Supabase Auth and role-based workspaces
+
+Phase 3 adds protected workspace selection (`/workspace`), email login/signup and verification, resend verification, Google OAuth PKCE callback, password recovery, TOTP MFA setup/challenge, seller application status (`/sell/application`) and server/RLS-guarded Buyer, Seller and Admin screens. Phase 3's `003_phase3_auth_hardening.sql` enforces `aal2` in database helper checks for sensitive seller/admin rows. Email/password login is supported; **username login is not yet included** (username is only a public handle).
+
+**No migrations, user accounts, domain settings or deployments were created remotely by this update.** Follow [PHASE3_SUPABASE_VERCEL.md](PHASE3_SUPABASE_VERCEL.md) to configure your staging Supabase project and Vercel environment variables, review migrations and test roles. Complete the checklist before moving beyond preview; no real checkout is enabled.
+
+Tests: `npm run check:source && npm run test:phase2 && npm run test:phase3 && npm run typecheck && npm run build` (the final two require dependencies to be installed and the Vercel environment configured).
+
+
+## Phase 4 — Seller onboarding & admin review
+
+See [PHASE4_PRODUCTION_GUIDE.md](PHASE4_PRODUCTION_GUIDE.md) for safe deployment, migration and policy publication. Run `npm run test:phase4` for structural checks; do **not** apply SQL to production without a staging clone/backup and legal approval.
+
+
+## Phase 5 — Seller Catalog Drafts (not live sales)
+
+ดู `PHASE5_SELLER_CATALOG_GUIDE.md` สำหรับวิธีอัปเดตฐานข้อมูล/โค้ดและทดสอบบน Staging. Phase 5 เพิ่มหน้า `/seller/products/new`, `/seller/products/[id]`, Private Storage สำหรับ Seller และหน้า Public UI Preview `/preview/phase5` (ข้อมูลตัวอย่างเท่านั้น). **ยังไม่เปิดสินค้า/รับเงินหรือให้ผู้ซื้อดาวน์โหลด**.
+
+
+## Phase 5.7 — Platform & Shop Policies
+
+See [PHASE5_7_POLICY_MANAGEMENT.md](PHASE5_7_POLICY_MANAGEMENT.md) for installation, read-only Production preflight, isolated Staging migration and policy review workflow. **Never use placeholder legal terms or direct SQL to open a Production shop.**
