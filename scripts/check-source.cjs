@@ -8,6 +8,6 @@ for(const f of files){const code=fs.readFileSync(f,'utf8');const parsed=ts.creat
   const imports=code.matchAll(/(?:import\s+(?:[^'"\n]*?\s+from\s+)?|import\s*\(|require\s*\()['"](@\/[^'"]+|\.\.?\/[^'"]+)['"]/g);
   for(const found of imports){const local=found[1];const loc=local.startsWith('@/')?local.substring(2):path.join(path.dirname(f),local);if(![loc,loc+'.ts',loc+'.tsx',loc+'.js',loc+'.jsx',path.join(loc,'index.ts'),path.join(loc,'index.tsx')].some(x=>fs.existsSync(x)))errors.push(`${f}: missing ${local}`)}
 }
-for(const asset of ['public/brand/tidalis-horizontal.png','public/brand/tidalis-icon.png','app/icon.png'])if(!fs.existsSync(asset))errors.push('Missing approved logo asset: '+asset);
-for(const needed of ['supabase/migrations/001_identity_catalog.sql','supabase/migrations/002_finance_tax.sql'])if(!fs.existsSync(needed))errors.push('Missing migration: '+needed);
+for(const asset of ['public/brand/tidalis-horizontal.png','app/icon.png'])if(!fs.existsSync(asset))errors.push('Missing approved logo asset: '+asset);
+for(const needed of ['supabase/migrations/001_identity_catalog.sql','supabase/migrations/002_finance_tax.sql','supabase/migrations/003_phase3_auth_hardening.sql'])if(!fs.existsSync(needed))errors.push('Missing migration: '+needed);
 console.log(`Source checks: ${files.length} TypeScript files, ${errors.length} error(s)`);if(errors.length){console.error(errors.join('\n'));process.exitCode=1}
