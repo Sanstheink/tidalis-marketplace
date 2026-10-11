@@ -13,7 +13,7 @@ export default async function SellerEditProduct({params,searchParams}:{params:Pr
   const elevated=assurance?.currentLevel==='aal2';
   if(!['owner','manager','artist'].includes(member.role))redirect('/seller/products?notice=read-only');
   const [{data:product,error},{data:licenses},{data:workTypes},{data:files},query]=await Promise.all([
-    client.from('products').select('id,shop_id,name,slug,description,product_type,work_type_id,is_exclusive,stock,status,review_note').eq('id',id).eq('shop_id',member.shop_id).maybeSingle(),
+    client.from('products').select('id,shop_id,name,slug,description,product_type,work_type_id,is_exclusive,stock,currency,status,review_note').eq('id',id).eq('shop_id',member.shop_id).maybeSingle(),
     client.from('product_license_prices').select('usage_type,price_minor,terms').eq('product_id',id),
     client.from('shop_work_types').select('id,name').eq('shop_id',member.shop_id).order('name'),
     client.from('product_files').select('id,file_path,is_delivery_file').eq('product_id',id).order('created_at',{ascending:true}),

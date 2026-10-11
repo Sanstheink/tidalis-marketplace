@@ -84,7 +84,7 @@ try{
   await as(id.admin);
   await check('admin AAL1 cannot operate announcements or issue finance documents',async()=>{
     await denied("select public.tidalis_save_announcement(null,'Test Title','Test Announcement Text',null,true,false,0,null,null)",/Admin AAL2/);
-    await denied('select public.tidalis_issue_platform_document(null,\'receipt\')',/Admin AAL2/);
+    await denied('select public.tidalis_issue_platform_document(null,\'receipt\')',/admin_mfa_required/);
   });
   await as(id.admin,'aal2');
   const policy=(await rows("select public.create_seller_agreement_draft('Local Synthetic Seller Agreement',repeat('x',600)) as id"))[0].id;
@@ -118,7 +118,7 @@ try{
   await check('ascending and descending prices sort globally before pagination',async()=>{const low=await search("'','all','low',1,24");const high=await search("'','all','high',1,24");assert.equal(low.items[0].slug,'catalog-1');assert.equal(high.items[0].slug,'catalog-70')});
   await check('SQL LIKE wildcard search characters are treated as literal text',async()=>{assert.equal((await search("'100%_Artwork','all','featured',1,24")).total,1);assert.equal((await search("'No%Match','all','featured',1,24")).total,0)});
   await check('catalog filters exclude drafts, paused shops and other product modes',async()=>{assert.equal((await search("'','digital_asset','featured',1,24")).total,0);assert.equal((await search(`'','all','featured',1,24,'${id.otherShop}'`)).total,0)});
-  await check('catalog JSON exposes public fields and no file metadata',async()=>{const item=(await search("'','all','featured',1,24")).items[0];assert.deepEqual(Object.keys(item).sort(),['description','id','is_exclusive','name','pricing_mode','product_license_prices','product_type','shop','shop_id','slug','stock','work_type'].sort())});
+  await check('catalog JSON exposes public fields and no file metadata',async()=>{const item=(await search("'','all','featured',1,24")).items[0];assert.deepEqual(Object.keys(item).sort(),['currency','description','id','is_exclusive','name','pricing_mode','product_license_prices','product_type','shop','shop_id','slug','stock','work_type'].sort())});
   await owner();await db.exec(`update public.products set status='published',published_at=now() where id='${id.product}'`);await as(null,'aal1','anon');
   await check('published active product exposes preview metadata/objects, never delivery',async()=>{const files=await rows('select file_path,is_delivery_file from public.product_files');assert.equal(files.length,1);assert.equal(files[0].is_delivery_file,false);assert.equal((await rows('select name from storage.objects')).length,1)});
   await owner();await db.exec(`update public.shops set status='paused' where id='${id.shop}'`);await as(null,'aal1','anon');

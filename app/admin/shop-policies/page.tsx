@@ -6,7 +6,7 @@ export const dynamic='force-dynamic';
 const BUCKET='tidalis-policy-documents';
 const messages:Record<string,string>={invalid:'กรุณาตรวจเหตุผลการตัดสินใจและยืนยันการตรวจเนื้อหา', 'review-failed':'ดำเนินการไม่สำเร็จ ตรวจ Migration, MFA และสถานะนโยบาย',reviewed:'บันทึกผลการตรวจสอบแล้ว'};
 export default async function AdminShopPolicies({searchParams}:{searchParams:Promise<{result?:string}>}){
-  const {client}=await requirePlatformAdmin();
+  const {client}=await requirePlatformAdmin('/admin/shop-policies');
   const {data,error}=await client.from('shop_policy_versions')
     .select('id,shop_id,policy_type,version,content,source_type,document_path,document_name,status,created_at,submitted_at,shops(name,slug,status)')
     .eq('status','under_review').order('submitted_at',{ascending:true}).limit(100);

@@ -1,21 +1,22 @@
 import Link from 'next/link';
 import {requirePlatformAdmin} from '@/lib/auth';
-import {baht,dateThai} from '@/lib/admin-finance';
+import {formatMoney} from '@/lib/payment-utils';
+import {dateThai} from '@/lib/admin-finance';
 import {issuePlatformDocument,voidPlatformDocument} from './actions';
 export const dynamic='force-dynamic';
 const notices:Record<string,string>={
  invalid:'ตรวจข้อมูลและการยืนยันก่อนออก/ยกเลิกเอกสาร',
- failed:'ดำเนินการไม่สำเร็จ: ต้องมีใบแจ้งหนี้ รับเงินยืนยันแล้ว ข้อมูลนิติบุคคล/ผู้ขายครบ และ Admin MFA AAL2',
+ failed:'ยังออกใบเสร็จไม่ได้ กรุณาตรวจการยืนยันรับเงิน ข้อมูลผู้ออกและผู้รับเอกสาร และยืนยัน Authenticator',
  issued:'ออกเอกสารสำเร็จแล้ว กรุณาตรวจฉบับพิมพ์',voided:'บันทึกการยกเลิกเอกสารแล้ว'
 };
 export default async function AdminPlatformBilling({searchParams}:{searchParams:Promise<{notice?:string}>}){
- const {client}=await requirePlatformAdmin();const params=await searchParams;
+ const {client}=await requirePlatformAdmin('/admin/finance/documents');const params=await searchParams;
  const [docs,payments,invoices,shops,issuer]=await Promise.all([
-  client.from('platform_billing_documents').select('id,shop_id,invoice_id,payment_id,document_type,document_number,status,total_minor,issued_at,voided_at,void_reason')
+  client.from('platform_billing_documents').select('id,shop_id,invoice_id,payment_id,document_type,document_number,status,total_minor,currency,issued_at,voided_at,void_reason')
     .order('issued_at',{ascending:false}).limit(100),
   client.from('platform_fee_payments').select('id,invoice_id,amount_minor,status,confirmed_by,confirmed_at')
     .eq('status','confirmed').limit(100),
-  client.from('seller_invoices').select('id,shop_id,invoice_number,total_minor,status').limit(500),
+  client.from('seller_invoices').select('id,shop_id,invoice_number,total_minor,currency,status').limit(500),
   client.from('shops').select('id,name').limit(500),
   client.from('platform_issuer_profile').select('legal_name,tax_id,vat_registered,tax_invoice_enabled,approved_at').maybeSingle()
  ]);
@@ -23,7 +24,7 @@ export default async function AdminPlatformBilling({searchParams}:{searchParams:
  const names=new Map((shops.data||[]).map(s=>[s.id,s.name]));
  const existing=new Set((docs.data||[]).map(d=>d.payment_id+':'+d.document_type));
  return <main className="container page-pad">
-  <div className="page-heading"><div className="eyebrow">ADMIN / PLATFORM BILLING</div><h1>Platform <em>documents.</em></h1>
+  <div className="page-heading"><div className="eyebrow">ADMIN / PLATFORM BILLING</div><h1>ใบเสร็จ<em>แพลตฟอร์ม.</em></h1>
    <p>Tidalis ออกเอกสารให้ Seller สำหรับค่าธรรมเนียมที่ได้รับจริงเท่านั้น</p></div>
   <Link href="/admin/finance" className="text-link">← Finance Center</Link>
   {params.notice&&notices[params.notice]&&<p role="status" className="phase4-alert">{notices[params.notice]}</p>}
@@ -33,17 +34,17 @@ export default async function AdminPlatformBilling({searchParams}:{searchParams:
   </div>
   {[docs,payments,invoices,shops,issuer].some(x=>x.error)&&<p role="alert">อ่านบางตารางไม่สำเร็จ ตรวจ Migration 010 และ Admin AAL2</p>}
   <section className="phase4-card">
-   <h2>ผู้ออกเอกสาร (ตั้งค่าโดย Trusted SQL Operator)</h2>
+   <h2>ผู้ออกใบเสร็จรับเงิน</h2>
    {issuer.data?<p><strong>{issuer.data.legal_name}</strong> · VAT {issuer.data.vat_registered?'ลงทะเบียน':'ยังไม่เปิด'}
      · Tax invoice {issuer.data.tax_invoice_enabled?'อนุญาตโดยผู้ดูแล':'ปิดอยู่'}</p>:
     <p role="alert">ยังไม่มีโปรไฟล์ Tidalis ที่ได้รับการอนุมัติ จึงไม่อนุญาตให้ออกเอกสาร</p>}
-   <p>ห้ามกรอกข้อมูลนิติบุคคลสมมติ หรือเปิด Tax Invoice เพียงเพื่อทดสอบบน Production</p>
+   <p><Link className="text-link" href="/admin/settings/payments">ตั้งค่าข้อมูลผู้ออกเอกสาร →</Link></p>
   </section>
   <section className="section">
    <h2>รายการรับค่าธรรมเนียมที่ยืนยันแล้ว · สูงสุด 100</h2>
-   {(payments.data||[]).filter(p=>p.confirmed_by&&p.confirmed_at).map(p=>{
+   {(payments.data||[]).filter(p=>p.confirmed_at).map(p=>{
     const invoice=invoicesById.get(p.invoice_id);return <article className="phase4-card" key={p.id}>
-    <h3>{invoice?.invoice_number||p.invoice_id} · {baht(p.amount_minor)}</h3>
+    <h3>{invoice?.invoice_number||p.invoice_id} · {formatMoney(p.amount_minor,invoice?.currency)}</h3>
     <p>ร้าน {invoice?names.get(invoice.shop_id)||invoice.shop_id:'—'} · ยืนยันรับ {dateThai(p.confirmed_at)}</p>
     {!existing.has(p.id+':receipt')&&<form action={issuePlatformDocument} className="phase4-action-form">
       <input type="hidden" name="payment_id" value={p.id}/>
@@ -74,7 +75,7 @@ export default async function AdminPlatformBilling({searchParams}:{searchParams:
     <th>เลขที่</th><th>ร้าน</th><th>ชนิด</th><th>ยอด</th><th>วันที่ออก</th><th>สถานะ</th><th>ดูฉบับพิมพ์</th></tr></thead>
     <tbody>{(docs.data||[]).map(d=><tr key={d.id}>
      <td>{d.document_number}</td><td>{names.get(d.shop_id)||d.shop_id}</td><td>{d.document_type}</td>
-     <td>{baht(d.total_minor)}</td><td>{dateThai(d.issued_at)}</td><td>{d.status}</td>
+     <td>{formatMoney(d.total_minor,d.currency)}</td><td>{dateThai(d.issued_at)}</td><td>{d.status}</td>
      <td><Link href={'/admin/finance/documents/'+d.id} className="text-link">ตรวจ/พิมพ์ ↗</Link>
       {d.status==='issued'&&d.document_type==='receipt'&&<details><summary>ยกเลิกเอกสาร</summary>
         <form action={voidPlatformDocument} className="phase4-action-form">

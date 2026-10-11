@@ -18,9 +18,9 @@ export function normalizeLiveCart(value:unknown):LiveCartLine[]{
   return result;
 }
 export type CheckoutPolicy={id:string;scope:'shop'|'platform';policy_type:string;version:number;content:string;source_type:string;document_path:string|null;document_name:string|null;document_url?:string|null};
-export type CheckoutProduct={id:string;slug:string;name:string;exclusive:boolean;available:number;licenses:{usageType:LiveLicense;priceMinor:number;terms:string}[]};
-export type CheckoutContext={enabled:boolean;eligible:boolean;reason:string|null;shop?:{id:string;name:string;slug:string};products:CheckoutProduct[];policies:CheckoutPolicy[];reservationMinutes:number};
-export type OrderItemInput={productId:string;license:LiveLicense;quantity:number;expectedPriceMinor:number;expectedTerms:string};
+export type CheckoutProduct={id:string;slug:string;name:string;exclusive:boolean;available:number;currency?:string;licenses:{usageType:LiveLicense;priceMinor:number;terms:string}[]};
+export type CheckoutContext={enabled:boolean;eligible:boolean;reason:string|null;paymentMethods?:Record<string,string[]>;shop?:{id:string;name:string;slug:string};products:CheckoutProduct[];policies:CheckoutPolicy[];reservationMinutes:number};
+export type OrderItemInput={productId:string;license:LiveLicense;quantity:number;expectedPriceMinor:number;expectedTerms:string;expectedCurrency?:string};
 export function checkoutRows(lines:LiveCartLine[],context:CheckoutContext){
   return lines.flatMap(line=>{
     const product=context.products.find(p=>p.id===line.productId);
@@ -41,8 +41,8 @@ export function checkoutStockValid(rows:ReturnType<typeof checkoutRows>){
 }
 export const orderLabels:Record<string,string>={pending:'จองสินค้าแล้ว',expired:'หมดเวลาจอง',cancelled:'ยกเลิกแล้ว',awaiting_quote:'รอใบเสนอราคา',awaiting_acceptance:'รอตอบรับ',awaiting_payment:'รอชำระเงิน',payment_review:'กำลังตรวจสอบ',paid:'ชำระแล้ว',fulfilling:'กำลังส่งมอบ',fulfilled:'ส่งมอบแล้ว'};
 export const checkoutError=(code:string)=>({
-  orders_closed:'ระบบยังไม่เปิดรับคำสั่งซื้อ กรุณากลับมาอีกครั้ง',shop_unavailable:'ร้านนี้ไม่พร้อมรับคำสั่งซื้อแล้ว',
-  shop_setup_pending:'ร้านนี้กำลังตั้งค่าระบบสั่งซื้อ กรุณากลับมาอีกครั้ง',stock_unavailable:'สินค้าบางรายการถูกจองแล้ว กรุณาตรวจสอบจำนวนอีกครั้ง',
+  mixed_currencies:'หนึ่งคำสั่งซื้อใช้สกุลเงินเดียว กรุณาแยกสินค้าคนละสกุลเงินออกก่อน',orders_closed:'ระบบยังไม่เปิดรับคำสั่งซื้อ กรุณากลับมาอีกครั้ง',shop_unavailable:'ร้านนี้ไม่พร้อมรับคำสั่งซื้อแล้ว',
+  payment_setup_pending:'ร้านยังไม่มีช่องทางรับเงินสำหรับสกุลเงินนี้ กรุณากลับมาเมื่อร้านตั้งค่าพร้อม',shop_setup_pending:'ร้านนี้กำลังตั้งค่าระบบสั่งซื้อ กรุณากลับมาอีกครั้ง',stock_unavailable:'สินค้าบางรายการถูกจองแล้ว กรุณาตรวจสอบจำนวนอีกครั้ง',
   product_unavailable:'สินค้าบางรายการไม่พร้อมจำหน่ายแล้ว กรุณากลับไปแก้ตะกร้า',license_unavailable:'License ที่เลือกไม่พร้อมจำหน่ายแล้ว',
   price_or_terms_changed:'ราคาหรือเงื่อนไขเปลี่ยนแล้ว กรุณาโหลดรายการใหม่และตรวจสอบอีกครั้ง',policies_changed:'นโยบายเปลี่ยนแล้ว กรุณาโหลดรายการใหม่และอ่านฉบับล่าสุด',
   active_order_limit:'คุณมีรายการจองที่ยังไม่สิ้นสุด 5 รายการ กรุณายกเลิกรายการที่ไม่ต้องการก่อน',own_shop_order:'ไม่สามารถสั่งซื้อสินค้าจากร้านที่คุณเป็นสมาชิกได้',

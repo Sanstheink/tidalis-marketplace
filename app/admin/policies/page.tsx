@@ -12,7 +12,7 @@ const messages:Record<string,string>={
   'publish-failed':'เผยแพร่ไม่สำเร็จ กรุณาตรวจเวอร์ชันและ MFA',published:'เผยแพร่ข้อตกลงแล้ว ตรวจหน้า Seller Agreement อีกครั้ง'
 };
 export default async function PlatformPolicies({searchParams}:{searchParams:Promise<{result?:string}>}){
-  const {client}=await requirePlatformAdmin();
+  const {client}=await requirePlatformAdmin('/admin/policies');
   const {data,error}=await client.from('platform_policy_versions')
     .select('id,policy_type,version,title,content,status,effective_from,approved_by')
     .order('policy_type').order('version',{ascending:false});

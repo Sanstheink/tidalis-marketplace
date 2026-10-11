@@ -4,9 +4,9 @@ import {reviewProductPublication} from './actions';
 export const dynamic='force-dynamic';
 const notices:Record<string,string>={invalid:'ข้อมูลหรือการยืนยันไม่ถูกต้อง',failed:'ดำเนินการไม่สำเร็จ ร้านอาจยังไม่ active หรือเงื่อนไขสินค้าเปลี่ยนไป',reviewed:'บันทึกผลการตรวจสินค้าแล้ว'};
 export default async function AdminProductReviews({searchParams}:{searchParams:Promise<{notice?:string}>}){
-  const [{client},params]=await Promise.all([requirePlatformAdmin(),searchParams]);
+  const [{client},params]=await Promise.all([requirePlatformAdmin('/admin/product-reviews'),searchParams]);
   const {data,error}=await client.from('products')
-    .select('id,name,description,product_type,shop_id,submitted_at,shops!inner(name,slug,status)')
+    .select('id,name,description,currency,product_type,shop_id,submitted_at,shops!inner(name,slug,status)')
     .eq('status','under_review').order('submitted_at',{ascending:true}).limit(100);
   const notes=new Map<string,string[]>();const previews=new Map<string,string>();const deliveries=new Map<string,string[]>();const licenses=new Map<string,{usage_type:string;price_minor:number;terms:string}[]>();
   const unavailable=new Set<string>();
@@ -31,7 +31,7 @@ export default async function AdminProductReviews({searchParams}:{searchParams:P
     {error&&<div className="phase4-alert" role="alert">อ่านรายการรอตรวจไม่ได้: {error.code}</div>}
     <div className="policy-version-list">{(data||[]).map(p=>{const s=Array.isArray(p.shops)?p.shops[0]:p.shops;const missing=notes.get(p.id)||[];return <article className="phase4-card" key={p.id}>
       <h2>{p.name}</h2><p>ร้าน {s?.name} · {s?.status} · {p.product_type} {s?.slug&&<Link href={`/shops/${s.slug}#shop-policies`} className="text-link">นโยบายร้าน ↗</Link>}</p><p>{p.description}</p>
-      <div className="phase5-note">{(licenses.get(p.id)||[]).map(l=><p key={l.usage_type}><strong>{l.usage_type}:</strong> {(l.price_minor/100).toFixed(2)} บาท · {l.terms}</p>)}</div>
+      <div className="phase5-note">{(licenses.get(p.id)||[]).map(l=><p key={l.usage_type}><strong>{l.usage_type}:</strong> {(l.price_minor/100).toFixed(2)} {p.currency} · {l.terms}</p>)}</div>
       {previews.get(p.id)?<p><a href={previews.get(p.id)} target="_blank" rel="noopener noreferrer">เปิดภาพตัวอย่างส่วนตัวเพื่อตรวจ ↗</a></p>:<p role="alert">ยังไม่สามารถตรวจภาพได้ — ห้ามอนุมัติ</p>}
       {p.product_type!=='commission'&&<p>ไฟล์ส่งมอบส่วนตัวที่ตรวจได้: {deliveries.get(p.id)?.length||0} ไฟล์ {deliveries.get(p.id)?.map((url,i)=><a key={i} href={url} className="text-link" target="_blank" rel="noopener noreferrer">ตรวจไฟล์ {i+1} ↗ </a>)}</p>}
       {missing.length>0&&<p className="phase5-note" role="alert">ข้อกำหนดไม่ครบ: {missing.join(', ')}</p>}

@@ -43,7 +43,7 @@ export function SellerProductFiles({shopId,productId,files,productType,elevated}
   }
   return <section className="phase5-panel phase5-files"><div className="eyebrow">04 / PRIVATE STORAGE</div>
     <h2>ไฟล์ผลงาน <LockKeyhole size={22}/></h2>
-    <p>ไฟล์ทั้งหมดเก็บในพื้นที่ <strong>Private</strong> และPreview ดูได้เฉพาะทีมร้านที่ลงทะเบียน Authenticator แล้ว ส่วนไฟล์ส่งมอบต้องยืนยัน AAL2 ไม่ใช่ไฟล์สาธารณะ และยังไม่มีการให้ลูกค้าดาวน์โหลดในเฟสนี้</p>
+    <p>ภาพตัวอย่างจะแสดงเมื่อสินค้าเผยแพร่แล้ว ไฟล์ส่งมอบเก็บในพื้นที่ <strong>Private</strong> และดาวน์โหลดได้เฉพาะผู้ซื้อที่ได้รับสิทธิ์แล้ว การจัดการไฟล์ส่งมอบต้องยืนยัน Authenticator</p>
     <div className="phase5-file-grid">
       <div className="phase5-file-group"><h3><ImageIcon size={18}/> ภาพตัวอย่างสินค้า</h3><p>JPG, PNG, WebP · ไม่เกิน 8MB/ไฟล์ · สูงสุด 6 ไฟล์</p>
         <div className="phase5-preview-grid">{previews.map(file=><div key={file.id} className="phase5-preview-tile">{file.url?<a href={file.url} target="_blank" rel="noopener noreferrer"><img src={file.url} alt="ตัวอย่างผลงานที่อัปโหลด"/></a>:<span>ไม่มีสิทธิ์เปิดไฟล์</span>}</div>)}{previews.length===0&&<div className="phase5-file-empty">ยังไม่มีภาพตัวอย่าง</div>}</div>

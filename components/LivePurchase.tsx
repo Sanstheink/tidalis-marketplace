@@ -16,9 +16,9 @@ export function LivePurchase({product}:{product:PublicProduct}){
     add(product,license,quantity);setNotice('เพิ่มลงตะกร้าแล้ว');
   }
   return <div className="live-purchase"><div className="eyebrow"><Store size={14}/> {product.shopName} · {product.workType}</div>
-    <h1>{product.name}</h1><div className="live-price">{!fixed?<small>เริ่มต้น </small>:null}{publicPrice(selected.priceMinor)}</div>
+    <h1>{product.name}</h1><div className="live-price">{!fixed?<small>เริ่มต้น </small>:null}{publicPrice(selected.priceMinor,product.currency)}</div>
     <p className="live-price-caption">เลือกสิทธิ์ที่ตรงกับการใช้งานของคุณ</p>
-    <div className="live-license-options" role="group" aria-label="เลือก License">{product.licenses.map(l=><button type="button" key={l.usageType} aria-pressed={license===l.usageType} className={license===l.usageType?'selected':''} onClick={()=>{setLicense(l.usageType);setNotice('')}}><span>{l.usageType==='personal'?'Personal Use':'Commercial Use'}{license===l.usageType?<Check size={16}/>:null}</span><strong>{publicPrice(l.priceMinor)}</strong></button>)}</div>
+    <div className="live-license-options" role="group" aria-label="เลือก License">{product.licenses.map(l=><button type="button" key={l.usageType} aria-pressed={license===l.usageType} className={license===l.usageType?'selected':''} onClick={()=>{setLicense(l.usageType);setNotice('')}}><span>{l.usageType==='personal'?'Personal Use':'Commercial Use'}{license===l.usageType?<Check size={16}/>:null}</span><strong>{publicPrice(l.priceMinor,product.currency)}</strong></button>)}</div>
     <div className="live-license-terms"><ShieldCheck size={18}/><p>{selected.terms||'โปรดตรวจสอบสิทธิ์การใช้งานกับร้านผู้ขาย'}</p></div>
     {fixed?<><div className="live-purchase-quantity"><span>{product.exclusive?'Exclusive · 1 สิทธิ์เท่านั้น':'จำนวน'}</span><div className="quantity-control"><button type="button" aria-label="ลดจำนวน" disabled={quantity<=1} onClick={()=>setQuantity(q=>q-1)}><Minus size={16}/></button><span>{quantity}</span><button type="button" aria-label="เพิ่มจำนวน" disabled={quantity>=limit} onClick={()=>setQuantity(q=>q+1)}><Plus size={16}/></button></div></div>
       <button type="button" className="btn btn-primary wide" disabled={!hydrated||limit<1} onClick={addItem}><ShoppingBag size={18}/>{limit<1?'สินค้าหมด':'เพิ่มลงตะกร้า'}</button>

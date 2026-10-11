@@ -4,7 +4,7 @@ import {reviewShopReadiness,adminPauseShopVisibility} from './actions';
 export const dynamic='force-dynamic';
 const notices:Record<string,string>={invalid:'ตรวจการเลือกผลหรือเหตุผลและการยืนยัน',failed:'การตรวจคำขอไม่สำเร็จ อาจมีเงื่อนไขไม่ครบหรือสิทธิ์ MFA ไม่ถูกต้อง',reviewed:'บันทึกผลการตรวจคำขอแล้ว',paused:'พักหน้าร้านสาธารณะแล้ว'};
 export default async function AdminShopReadiness({searchParams}:{searchParams:Promise<{notice?:string}>}){
-  const [{client},params]=await Promise.all([requirePlatformAdmin(),searchParams]);
+  const [{client},params]=await Promise.all([requirePlatformAdmin('/admin/shop-readiness'),searchParams]);
   const {data,error}=await client.from('shop_readiness_requests')
     .select('id,shop_id,status,seller_note,submitted_at,shops!inner(name,slug,status)')
     .eq('status','submitted').order('submitted_at',{ascending:true}).limit(100);
@@ -16,7 +16,7 @@ export default async function AdminShopReadiness({searchParams}:{searchParams:Pr
     if(blockerError||!Array.isArray(values))unavailable.add(req.id);
     blockers.set(req.id,Array.isArray(values)?values:[]);
   }));
-  return <div className="container page-pad policy-manager-page"><div className="page-heading"><div className="eyebrow">ADMIN / SHOP OPENING</div><h1>Review <em>shop readiness.</em></h1><p>เปิดหน้าร้านสาธารณะหลังยืนยัน Seller Approval และนโยบายร้าน ไม่เปิดระบบรับเงิน</p></div>
+  return <div className="container page-pad policy-manager-page"><div className="page-heading"><div className="eyebrow">ADMIN / SHOP OPENING</div><h1>ตรวจความพร้อม<em>เปิดร้าน.</em></h1><p>ตรวจการอนุมัติผู้ขาย สินค้า และนโยบายก่อนเปิดหน้าร้านสาธารณะ</p></div>
     <Link href="/admin" className="text-link">← Admin Console</Link>
     {params.notice&&notices[params.notice]&&<div role="status" className="phase4-alert">{notices[params.notice]}</div>}
     {error&&<div role="alert" className="phase4-alert">อ่านคำขอไม่ได้: {error.code}</div>}
