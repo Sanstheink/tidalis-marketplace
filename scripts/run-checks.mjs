@@ -5,6 +5,6 @@ for(const file of ['check-source.cjs',...scripts]){
   const result=spawnSync(process.execPath,[`scripts/${file}`],{stdio:'inherit'});
   if(result.status!==0)process.exit(result.status??1);
 }
-for(const args of [['--test','tests/unit/stability.test.cjs'],['tests/db/regression.mjs']]){
+for(const args of [['--test',...readdirSync('tests/unit').filter(f=>f.endsWith('.test.cjs')).map(f=>`tests/unit/${f}`)],['tests/db/regression.mjs'],['tests/db/fixed-orders.mjs']]){
   const result=spawnSync(process.execPath,args,{stdio:'inherit'});if(result.status!==0)process.exit(result.status??1);
 }
