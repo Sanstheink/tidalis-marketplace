@@ -29,7 +29,7 @@ Buyer cancellation locks the owned order and refuses any non-pending order or an
 
 ## Verification
 
-- `npm test`: historical source guards, unit tests, 35 existing isolated database regressions and 20 new order regressions.
+- `npm test`: historical source guards, unit tests, 35 existing isolated database regressions and 24 new order regressions.
 - `npm run typecheck` and `npm run build`.
 - CI `user-flow`: starts a fresh local Supabase Postgres 17/Auth/Storage stack using CLI `2.120.0`; provisions synthetic confirmed accounts through the actual local Auth Admin API; uploads local private fixtures; signs buyers in through the real browser login form.
 - Browser scenarios: license and exact total, shop-scoped cart clearing, order detail/cancellation, no private delivery before payment, lost-response/reload retry, concurrent exclusive reservations, cross-buyer RLS/application denial, direct paid-write denial and 390px mobile layout.

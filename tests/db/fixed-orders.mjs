@@ -74,5 +74,22 @@ try{
  await check('active pending orders are capped at five per buyer',async()=>{for(let i=0;i<4;i++)await create();await denied(()=>create(),/active_order_limit/)});
  await owner();await db.exec('update public.marketplace_settings set fixed_orders_enabled=false');await as(buyer);
  await check('known retries survive gate closure; cancellation still works',async()=>{assert.equal(await create(items,key),order);await rows('select public.cancel_fixed_order($1)',[order]);});
+ await owner();await db.exec(`update public.marketplace_settings set fixed_orders_enabled=true;update public.shop_readiness_requests set status='needs_information' where shop_id='${shop}'`);await as(buyer);
+ await check('revoked shop readiness blocks ordering immediately',()=>denied(()=>create(),/shop_setup_pending/));
+ await owner();await db.exec(`update public.shop_readiness_requests set status='approved' where shop_id='${shop}';update public.shop_policy_versions set status='archived' where shop_id='${shop}' and policy_type='delivery'`);await as(buyer);
+ await check('missing current policy blocks new orders but retains accepted snapshots',async()=>{await denied(()=>create(),/shop_setup_pending/);assert.equal((await rows('select policy_snapshot from public.orders where id=$1',[order]))[0].policy_snapshot.length,8)});
+ const pdf=`shops/${shop}/policies/50000000-0000-4000-8000-000000000003.pdf`;
+ await owner();await db.query("insert into storage.objects(bucket_id,name,metadata) values('tidalis-policy-documents',$1,'{\"mimetype\":\"application/pdf\",\"size\":100}')",[pdf]);
+ await db.query("insert into public.shop_policy_versions(shop_id,policy_type,version,content,status,published_at,reviewed_by,source_type,document_path,document_name,document_size) values($1,'delivery',2,'Local PDF policy','published',now(),'10000000-0000-4000-8000-000000000004','pdf',$2,'test-delivery.pdf',100)",[shop,pdf]);await as(buyer);
+ const revised=(await rows('select public.get_fixed_checkout($1,$2::uuid[]) as ctx',[shop,[product]]))[0].ctx;
+ await check('policy version changes require fresh buyer acceptance',()=>denied(()=>create(),/policies_changed/));
+ const pdfOrder=await create([item()],randomUUID(),revised.policies.map(p=>p.id));
+ await owner();await db.exec(`update public.shop_policy_versions set status='archived' where shop_id='${shop}' and policy_type='delivery';update public.shops set status='paused' where id='${shop}'`);
+ await check('archived private policy PDF stays visible only to its accepting buyer',async()=>{
+  await as(buyer);assert.equal((await rows('select name from storage.objects where name=$1',[pdf])).length,1);
+  await as(other);assert.equal((await rows('select name from storage.objects where name=$1',[pdf])).length,0);
+  await as(null,'anon');assert.equal((await rows('select name from storage.objects where name=$1',[pdf])).length,0);
+  await as(buyer);await rows('select public.cancel_fixed_order($1)',[pdfOrder]);
+ });
  console.log(`Fixed-order regressions: ${count} passed (isolated PostgreSQL model; concurrency/GoTrue tested separately in CI)`);
 }catch(error){console.error('Fixed-order regression failed:',error.message,error.code||'',error.where||'');process.exitCode=1;}finally{await db.close()}

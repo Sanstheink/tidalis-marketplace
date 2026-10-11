@@ -194,3 +194,13 @@
 @media(max-width:900px){.commerce-layout{grid-template-columns:minmax(0,1fr)}.commerce-summary{position:static}.commerce-summary .commerce-total{display:flex;align-items:center;justify-content:space-between}.order-list{grid-template-columns:1fr}}
 @media(max-width:540px){.commerce-heading{align-items:start;gap:12px;flex-wrap:wrap;margin-bottom:25px}.commerce-heading-icon{width:62px;height:62px;border-radius:18px}.commerce-card{padding:19px 16px;border-radius:15px}.commerce-heading h1{font-size:31px}.live-cart-row{gap:11px;position:relative}.cart-artwork{width:58px;height:75px;font-size:31px}.live-cart-copy h3{font-size:13px;padding-right:30px}.live-cart-end{position:absolute;right:0;top:27px}.live-cart-end strong{position:absolute;top:103px;right:0;font-size:13px}.live-cart-end button{width:28px;height:28px}.shop-cart-bottom{align-items:start;flex-direction:column;gap:16px}.shop-cart-bottom .btn{width:100%}.shop-cart-heading{gap:9px}.shop-cart-heading strong{font-size:13px}.checkout-progress{font-size:10px;padding:14px 12px;gap:6px}.order-product-row{gap:10px;flex-wrap:wrap}.order-product-row>strong{margin-left:57px;font-size:13px}.order-product-row>div{flex-basis:calc(100% - 60px)}.order-card-middle{gap:10px;flex-wrap:wrap}.order-card-middle>strong{margin-left:58px;font-size:19px}.order-card-middle h2{font-size:14px}.order-card-top{align-items:start}.commerce-consent{font-size:11px}.live-license-options strong{font-size:14px}.order-totals .commerce-total>strong{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.order-card{transition:none}.order-card:hover{transform:none}}
+
+/* Keep the approved brand art with an explicit, readable wordmark. */
+.topnav .logo{display:flex;align-items:center;gap:11px;width:185px;flex:none}
+.topnav .logo img{width:43px;height:43px;object-fit:cover;border-radius:12px;border:1px solid #8d65b14d}
+.logo-wordmark{display:flex;flex-direction:column;gap:4px;color:#f0e2ff;font-size:23px;font-weight:750;line-height:1;letter-spacing:.1em}
+.logo-wordmark small{font-size:8px;color:#b89bce;font-weight:600;letter-spacing:.24em}
+.footer-brand .footer-logo{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+.footer-brand .footer-logo img{width:54px;height:54px;margin:0;border-radius:14px;object-fit:cover;border:1px solid #9976b14d}
+.footer-brand .footer-logo .logo-wordmark{color:#f0e2ff;font-size:23px;line-height:1}
+@media(max-width:520px){.topnav .logo{width:158px;gap:9px}.topnav .logo img{width:36px;height:36px;border-radius:10px}.topnav .logo-wordmark{font-size:20px}.topnav .logo-wordmark small{font-size:7px}.topnav .nav-actions{gap:12px}}

@@ -5,7 +5,7 @@ import {useRouter} from 'next/navigation';
 import {ArrowLeft,ArrowRight,Clock3,FileText,ShieldCheck,Store,RefreshCw} from 'lucide-react';
 import {placeFixedOrder} from '@/app/checkout/actions';
 import {useMarketplaceCart} from '@/lib/marketplace-cart';
-import {checkoutError,checkoutRows,liveLineKey,type OrderItemInput,type CheckoutPolicy} from '@/lib/marketplace-cart-utils';
+import {checkoutError,checkoutRows,checkoutStockValid,liveLineKey,type OrderItemInput,type CheckoutPolicy} from '@/lib/marketplace-cart-utils';
 import {publicPrice,type PublicShop} from '@/lib/public-catalog-shared';
 import {useLiveCheckout} from './MarketplaceCartView';
 export const policyName=(p:CheckoutPolicy)=>({refund:'การยกเลิกและคืนเงิน',delivery:'การส่งมอบงาน',license:'สิทธิ์การใช้งาน',terms:'ข้อกำหนดการใช้บริการ',privacy:'ความเป็นส่วนตัว','seller-agreement':'ข้อตกลงผู้ขาย','payment-refund':'การชำระเงินและคืนเงิน',copyright:'ลิขสิทธิ์'} as Record<string,string>)[p.policy_type]||p.policy_type;
@@ -22,7 +22,7 @@ export default function FixedCheckout({shop,userId}:{shop:PublicShop;userId:stri
   const {contexts,loading,error,reload}=useLiveCheckout(selected,hydrated);const context=contexts[shop.id];
   const [note,setNote]=useState('');const [accepted,setAccepted]=useState(false);const [pending,setPending]=useState(false);const [message,setMessage]=useState('');const sending=useRef(false);const retry=useRef<{payload:string;key:string;storageKey:string}|null>(null);const router=useRouter();
   const rows=context?checkoutRows(selected,context):[];const total=rows.reduce((s,r)=>s+r.subtotal,0);
-  const valid=rows.length===selected.length&&rows.length>0&&rows.every(r=>r.line.quantity<=r.product.available&&(!r.product.exclusive||r.line.quantity===1));
+  const valid=rows.length===selected.length&&rows.length>0&&checkoutStockValid(rows);
   const policiesReady=context?.policies.length===8&&context.policies.every(p=>p.source_type!=='pdf'||p.document_url);
   const canOrder=Boolean(context?.enabled&&context.eligible&&valid&&policiesReady);
   function refresh(){setAccepted(false);setMessage('');reload()}

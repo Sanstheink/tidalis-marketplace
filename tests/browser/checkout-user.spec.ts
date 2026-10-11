@@ -25,18 +25,19 @@ async function addBrush(page:Page,commercial=false){
   await page.goto(productPath);if(commercial)await page.getByRole('button',{name:/Commercial Use/}).click();
   await page.getByRole('button',{name:'เพิ่มลงตะกร้า',exact:true}).click();await expect(page.getByRole('status')).toContainText('เพิ่มลงตะกร้าแล้ว');
 }
+async function screenshot(page:Page,name:string){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`test-results/checkout-ui/${name}.png`,fullPage:true});}
 async function cleanOrders(){const client=await signed();const {data,error}=await client.from('orders').select('id').eq('status','pending');expect(error).toBeNull();for(const o of data||[]){const {error}=await client.rpc('cancel_fixed_order',{p_order_id:o.id});expect(error).toBeNull();}}
 test.beforeEach(async()=>{await cleanOrders()});
 test('buyer signs in through UI, orders with correct license/total, retains other-shop cart and cancels',async({page})=>{
   await addBrush(page,true);await page.getByRole('button',{name:'เพิ่มจำนวน',exact:true}).click();await page.getByRole('button',{name:'เพิ่มลงตะกร้า',exact:true}).click();
   // One initial add + two additional units = three commercial rights.
   await page.goto('/products/other-artwork--30000000-0000-4000-8000-000000000003');await page.getByRole('button',{name:'เพิ่มลงตะกร้า',exact:true}).click();
-  await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(2);
+  await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(2);await screenshot(page,'cart-desktop');
   await page.locator('.shop-cart').filter({hasText:'Moonlit Test Studio'}).getByRole('link',{name:'ตรวจสอบรายการ'}).click();
   await expect(page.getByRole('link',{name:'เข้าสู่ระบบเพื่อดำเนินการต่อ'})).toBeVisible();
   await login(page,'/checkout/moonlit-test-studio');
   await page.getByLabel('หมายเหตุ (ไม่บังคับ)').fill('Browser buyer note');
-  await page.getByRole('checkbox').check();await page.screenshot({path:'test-results/checkout-ui/checkout-desktop.png',fullPage:true});
+  await page.getByRole('checkbox').check();await screenshot(page,'checkout-desktop');
   await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page).toHaveURL(/\/account\/orders\/[0-9a-f-]{36}$/);
   await expect(page.getByRole('heading',{name:'บันทึกคำสั่งซื้อแล้ว'})).toBeVisible();await expect(page.locator('.order-note')).toHaveText('Browser buyer note');
   const id=page.url().split('/').at(-1)!;const client=await signed();
@@ -45,7 +46,7 @@ test('buyer signs in through UI, orders with correct license/total, retains othe
   expect(order!.order_items).toEqual([{quantity:3,usage_type:'commercial',price_minor:25125}]);
   const privatePath=`shops/${shop}/products/${brush}/deliverables/50000000-0000-4000-8000-000000000002.zip`;
   const denied=await client.storage.from('tidalis-product-files').createSignedUrl(privatePath,30);expect(denied.error).not.toBeNull();
-  await page.screenshot({path:'test-results/checkout-ui/order-desktop.png',fullPage:true});
+  await screenshot(page,'order-desktop');
   await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(1);await expect(page.locator('.shop-cart')).toContainText('Other Test Studio');
   await page.goto(`/account/orders/${id}`);await page.getByRole('button',{name:'ยกเลิกคำสั่งซื้อ',exact:true}).click();await page.getByRole('button',{name:'ยืนยันยกเลิก',exact:true}).click();
   await expect(page.locator('.commerce-heading .order-status')).toHaveText('ยกเลิกแล้ว');await expect(page.getByRole('heading',{name:'ยกเลิกแล้ว'})).toBeVisible();
@@ -58,7 +59,7 @@ test('a lost response after database commit survives reload and creates only one
       const response=await route.fetch();expect(response.status()).toBe(200);dropped=true;await route.abort('failed');
     }else await route.continue();
   });
-  await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.getByRole('alert')).toContainText('ยังยืนยันผลไม่ได้');
+  await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.locator('.commerce-summary [role="alert"]')).toContainText('ยังยืนยันผลไม่ได้');
   const client=await signed();const before=await client.from('orders').select('id').eq('status','pending');expect(before.data).toHaveLength(1);
   await page.unroute('**/checkout/moonlit-test-studio');await page.reload();await page.getByRole('checkbox').check();
   await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page).toHaveURL(new RegExp(`/account/orders/${before.data![0].id}$`));
@@ -90,12 +91,12 @@ test('a second user cannot open another buyer order through the actual applicati
   await expect(page.locator('.order-note')).toHaveCount(0);
 });
 test('mobile buyer can review real prices and terms without horizontal overflow',async({page})=>{
-  await page.setViewportSize({width:390,height:844});await login(page);await addBrush(page,true);await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(1);
+  await page.setViewportSize({width:390,height:844});await login(page);await addBrush(page,true);await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(1);await screenshot(page,'cart-mobile');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.getByRole('link',{name:'ตรวจสอบรายการ'}).click();await page.getByRole('checkbox').check();
   await expect(page.getByRole('button',{name:'ยืนยันและจองสินค้า'})).toBeEnabled();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await page.screenshot({path:'test-results/checkout-ui/checkout-mobile.png',fullPage:true});
+  await screenshot(page,'checkout-mobile');
   await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.getByRole('heading',{name:'บันทึกคำสั่งซื้อแล้ว'})).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.screenshot({path:'test-results/checkout-ui/order-mobile.png',fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await screenshot(page,'order-mobile');
 });
 test.afterAll(async()=>{await cleanOrders()});

@@ -40,7 +40,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-`npm test` runs all historical checks, mocked read contracts, 14 unit cases and 55 isolated database regressions. CI builds core browser checks with placeholder configuration, then tests signed buyers against a fresh local Supabase Auth/Postgres/Storage stack. It never modifies the hosted project. The opt-in live browser suite is separate:
+`npm test` runs all historical checks, mocked read contracts, 15 unit cases and 59 isolated database regressions. CI builds core browser checks with placeholder configuration, then tests signed buyers against a fresh local Supabase Auth/Postgres/Storage stack. It never modifies the hosted project. The opt-in live browser suite is separate:
 
 ```bash
 TIDALIS_LIVE_TESTS=true npm run test:browser

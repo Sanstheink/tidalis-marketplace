@@ -4,7 +4,7 @@ import {useEffect,useState} from 'react';
 import {ArrowLeft,ArrowRight,ShoppingBag,Store,Minus,Plus,Trash2,ShieldCheck,Sparkles,RefreshCw} from 'lucide-react';
 import {loadCheckout} from '@/app/checkout/actions';
 import {useMarketplaceCart} from '@/lib/marketplace-cart';
-import {checkoutRows,liveLineKey,type CheckoutContext,type LiveCartLine} from '@/lib/marketplace-cart-utils';
+import {checkoutRows,checkoutStockValid,liveLineKey,type CheckoutContext,type LiveCartLine} from '@/lib/marketplace-cart-utils';
 import {publicPrice} from '@/lib/public-catalog-shared';
 
 export function useLiveCheckout(lines:LiveCartLine[],hydrated:boolean){
@@ -32,13 +32,13 @@ export default function MarketplaceCartView(){
     <div className="commerce-layout"><div className="commerce-main">{shops.map(id=>{
       const context=contexts[id];const selected=lines.filter(l=>l.shopId===id);const rows=context?checkoutRows(selected,context):[];
       const missing=selected.filter(l=>!rows.some(r=>liveLineKey(r.line)===liveLineKey(l)));
-      const valid=!missing.length&&rows.every(r=>r.line.quantity<=r.product.available&&(!r.product.exclusive||r.line.quantity===1));
+      const valid=!missing.length&&checkoutStockValid(rows);
       return <section className="commerce-card shop-cart" key={id}><div className="shop-cart-heading"><div><Store size={19}/><strong>{context?.shop?.name||'ร้านที่ไม่พร้อมจำหน่าย'}</strong></div><span>{selected.length} รายการ</span></div>
         {rows.map(({line,product,price,subtotal})=><div className="live-cart-row" key={liveLineKey(line)}>
           <Link className="cart-artwork" href={`/products/${encodeURIComponent(product.slug)}--${product.id}`} aria-label={`ดู ${product.name}`}>✦</Link>
           <div className="live-cart-copy"><Link href={`/products/${encodeURIComponent(product.slug)}--${product.id}`}><h3>{product.name}</h3></Link><span className="license-pill">{line.license==='personal'?'Personal Use':'Commercial Use'}{product.exclusive?' · Exclusive':''}</span><p>{publicPrice(price.priceMinor)} / สิทธิ์</p>
             <div className="quantity-control compact"><button aria-label={`ลดจำนวน ${product.name}`} disabled={line.quantity<=1} onClick={()=>update(liveLineKey(line),line.quantity-1)}><Minus size={14}/></button><span>{line.quantity}</span><button aria-label={`เพิ่มจำนวน ${product.name}`} disabled={product.exclusive||line.quantity>=product.available} onClick={()=>update(liveLineKey(line),line.quantity+1)}><Plus size={14}/></button></div>
-            {line.quantity>product.available||product.exclusive&&line.quantity>1?<p className="form-error" role="alert">จำนวนไม่พร้อมจำหน่าย กรุณาลดจำนวนหรือนำรายการออก</p>:null}</div>
+            {!checkoutStockValid(rows.filter(r=>r.product.id===product.id))?<p className="form-error" role="alert">จำนวนรวมของสินค้านี้ไม่พร้อมจำหน่าย กรุณาลดจำนวนหรือนำรายการออก</p>:null}</div>
           <div className="live-cart-end"><strong>{publicPrice(subtotal)}</strong><button aria-label={`ลบ ${product.name}`} onClick={()=>remove(liveLineKey(line))}><Trash2 size={17}/></button></div>
         </div>)}
         {missing.map(line=><div className="unavailable-cart-row" key={liveLineKey(line)}><span>สินค้าหรือ License นี้ไม่พร้อมจำหน่ายแล้ว</span><button className="btn btn-ghost" onClick={()=>remove(liveLineKey(line))}>นำออกจากตะกร้า</button></div>)}

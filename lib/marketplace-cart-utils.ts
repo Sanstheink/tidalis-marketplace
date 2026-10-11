@@ -31,6 +31,14 @@ export function checkoutRows(lines:LiveCartLine[],context:CheckoutContext){
 export function orderState(status:string,expiresAt:string|null,now=Date.now()){
   return status==='pending'&&expiresAt&&Date.parse(expiresAt)<=now?'expired':status;
 }
+export function checkoutStockValid(rows:ReturnType<typeof checkoutRows>){
+  const requested=new Map<string,number>();
+  for(const row of rows)requested.set(row.product.id,(requested.get(row.product.id)||0)+row.line.quantity);
+  return rows.every(row=>{
+    const count=requested.get(row.product.id)!;
+    return count<=Math.min(20,row.product.available)&&(row.product.exclusive?count===1:true);
+  });
+}
 export const orderLabels:Record<string,string>={pending:'จองสินค้าแล้ว',expired:'หมดเวลาจอง',cancelled:'ยกเลิกแล้ว',awaiting_quote:'รอใบเสนอราคา',awaiting_acceptance:'รอตอบรับ',awaiting_payment:'รอชำระเงิน',payment_review:'กำลังตรวจสอบ',paid:'ชำระแล้ว',fulfilling:'กำลังส่งมอบ',fulfilled:'ส่งมอบแล้ว'};
 export const checkoutError=(code:string)=>({
   orders_closed:'ระบบยังไม่เปิดรับคำสั่งซื้อ กรุณากลับมาอีกครั้ง',shop_unavailable:'ร้านนี้ไม่พร้อมรับคำสั่งซื้อแล้ว',
