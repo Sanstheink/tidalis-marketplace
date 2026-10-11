@@ -59,6 +59,6 @@ export function SellerProductFiles({shopId,productId,files,productType,elevated}
       </div>
     </div>
     {message&&<p role="status" className="phase5-message">{message}</p>}
-    <small className="phase5-help">ระบบจัดการเวอร์ชัน ลบไฟล์ สแกนไฟล์ และดาวน์โหลดหลังชำระเงินยังอยู่ในเฟสถัดไป ห้ามใช้เป็นช่องทางส่งมอบให้ลูกค้าจริง</small>
+    <small className="phase5-help">ตรวจไฟล์ให้ครบก่อนส่งสินค้าให้แอดมินอนุมัติ ผู้ซื้อจะดาวน์โหลดไฟล์จากคลังของตนได้เมื่อผู้รับเงินยืนยันยอดแล้ว</small>
   </section>;
 }
