@@ -1,6 +1,23 @@
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {policyPages} from '@/lib/policies';
-const outline:Record<string,string[]>={terms:['บทบาท Marketplace Tidalis และความสัมพันธ์ระหว่างผู้ซื้อกับร้านผู้ขาย','การสมัครบัญชี การยืนยันตัวตน และสิทธิ์การใช้งาน','การสั่งซื้อสินค้าแบบราคาคงที่และ Commission','สิทธิ์และหน้าที่ของสมาชิก และข้อจำกัดความรับผิดตามกฎหมาย','การร้องเรียนและการเปลี่ยนแปลงข้อกำหนด'],privacy:['ประเภทข้อมูลที่เก็บ: Auth, คำสั่งซื้อ, สลิป, Reference, เอกสารผู้ขาย','วัตถุประสงค์และฐานทางกฎหมายสำหรับการประมวลผล','การเปิดเผยข้อมูลแก่ผู้ขายและผู้ให้บริการระบบ','ระยะเวลาจัดเก็บ ความปลอดภัย และสิทธิ์เจ้าของข้อมูล','ข้อมูลติดต่อผู้ควบคุมข้อมูลส่วนบุคคล'],cookies:['Essential cookies สำหรับการเข้าสู่ระบบและตะกร้า','Analytics และ Marketing cookies เมื่อมีการเปิดใช้','การเลือกและถอนความยินยอม','อายุคุกกี้และคู่ค้าที่เกี่ยวข้อง'],'buyer-protection':['การแจ้งปัญหาหากไม่ได้รับสินค้า/ไฟล์','การตรวจสอบกรณีผู้ขายไม่ส่งมอบงาน','หลักฐานการโอนและการป้องกันสลิปซ้ำ','ข้อพิพาท กระบวนการพิจารณา และสิทธิ์ตามกฎหมาย'],'seller-agreement':['การสมัครร้าน การตรวจสอบตัวตนและนโยบายร้าน','การรับเงินโดยตรงของผู้ขายและความรับผิดชอบต่อสินค้า','ค่าธรรมเนียมเป็นเปอร์เซ็นต์จากยอดขายที่ยืนยันและรอบบิล','การออกใบเสร็จ การยืนยัน VAT และเอกสารภาษี','การรับเรื่องร้องเรียน การระงับร้าน และการอุทธรณ์'],'payment-refund':['ผู้ซื้อชำระเข้าบัญชี PromptPay หรือช่องทางของร้านโดยตรง','การอัปโหลดสลิปและผู้ขายตรวจสอบก่อนส่งไฟล์','นโยบายคืนเงินแต่ละร้านและหลักสิทธิ์ตามกฎหมาย','การคืนเงิน Manual โดยร้าน พร้อมหลักฐานและข้อพิพาท','การปรับค่าธรรมเนียมเมื่อคืนเงินสำเร็จ'],'copyright':['ความเป็นเจ้าของและสิทธิ์ที่ผู้ขายรับรอง','Personal Use และ Commercial Use พร้อมราคาผู้ขายกำหนด','ขอบเขตของ Exclusive และการโอนลิขสิทธิ์','การรับแจ้งละเมิดและกระบวนการอุทธรณ์'],'community':['เนื้อหาที่อนุญาตหรือห้ามเผยแพร่','การติดต่อสื่อสารระหว่างผู้ซื้อและผู้ขาย','การป้องกันสแปม ฉ้อโกง และสินค้าละเมิดสิทธิ์','มาตรการตรวจสอบ รายงาน และระงับบัญชี']};
-export function generateStaticParams(){return policyPages.map(p=>({slug:p.slug}))}
-export default async function Policy({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const page=policyPages.find(p=>p.slug===slug);if(!page)notFound();return <article className="container page-pad legal-content"><Link href="/policies" className="back-link">← กลับสู่ศูนย์นโยบาย</Link><div className="eyebrow">TIDALIS / LEGAL CENTER</div><h1>{page.title}</h1><p>{page.desc}</p><div className="legal-alert"><strong>ฉบับร่างเพื่อการวางระบบเท่านั้น</strong> — ยังไม่มีวันที่มีผลบังคับ ไม่ใช่เงื่อนไขที่เผยแพร่ใช้งานจริง และไม่ควรใช้เป็นหลักฐานการยอมรับสัญญา</div>{(outline[slug]||[]).map((line,i)=><section key={line}><h2>{i+1}. {line}</h2><p>ส่วนนี้รอจัดทำเนื้อหาข้อกำหนดฉบับสมบูรณ์ และตรวจสอบโดยผู้รับผิดชอบด้านกฎหมายและการดำเนินงานของ Marketplace Tidalis ก่อนเปิดเว็บไซต์จริง</p></section>)}</article>}
+import {getPublishedPlatformPolicy} from '@/lib/public-policies';
+
+export const dynamic='force-dynamic';
+export function generateStaticParams(){return policyPages.map(p=>({slug:p.slug}));}
+export default async function PlatformPolicyPage({params}:{params:Promise<{slug:string}>}){
+  const {slug}=await params;
+  const metadata=policyPages.find(p=>p.slug===slug);
+  if(!metadata)notFound();
+  const published=await getPublishedPlatformPolicy(slug);
+  return <article className="container page-pad legal-content">
+    <Link href="/policies" className="back-link">← กลับสู่ศูนย์นโยบาย</Link>
+    <div className="eyebrow">TIDALIS / LEGAL CENTER</div>
+    <h1>{published?.title||metadata.title}</h1>
+    {published?<>
+      <p>ฉบับเผยแพร่ · เวอร์ชัน {published.version} · มีผลตั้งแต่ {published.effective_from?new Date(published.effective_from).toLocaleDateString('th-TH',{dateStyle:'long'}):'—'}</p>
+      <section className="phase4-policy-body" aria-label="เนื้อหานโยบายที่เผยแพร่">{published.content}</section>
+      {slug==='seller-agreement'&&<p className="phase4-small">การยอมรับข้อตกลงผู้ขายจะเกิดขึ้นเมื่อผู้สมัครยืนยันในแบบฟอร์ม ไม่ใช่เพียงการอ่านหน้านี้</p>}
+    </>:<div className="legal-alert" role="status"><strong>นโยบายนี้ยังไม่ได้เผยแพร่</strong> — ขณะนี้ยังไม่มีเอกสารฉบับที่มีผลใช้จริง กรุณากลับมาตรวจสอบอีกครั้ง ไม่ควรถือข้อความตัวอย่างเป็นข้อกำหนดที่ตกลงกันแล้ว</div>}
+  </article>;
+}
