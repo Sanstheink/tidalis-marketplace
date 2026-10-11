@@ -1,11 +1,15 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {createServerClient} from '@supabase/ssr';
+import {updateSessionResponse} from '@/lib/supabase/response';
 export async function proxy(request:NextRequest){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
  const anon=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  if(!url||!anon)return NextResponse.next({request});
  let response=NextResponse.next({request});
- const client=createServerClient(url,anon,{cookies:{getAll(){return request.cookies.getAll()},setAll(toSet){toSet.forEach(({name,value})=>request.cookies.set(name,value));response=NextResponse.next({request});toSet.forEach(({name,value,options})=>response.cookies.set(name,value,options))}}});
+ const client=createServerClient(url,anon,{cookies:{
+  getAll(){return request.cookies.getAll()},
+  setAll(toSet,headers){response=updateSessionResponse(request,response,toSet,headers)}
+ }});
  // Refresh auth on request so Server Components receive a valid session.
  await client.auth.getUser();
  return response;

@@ -13,7 +13,7 @@ const mfa=read('components/MfaSetup.tsx');
 const tests=[
  ['regular user is verified by email only',()=>{const block=auth.split('export async function requireUser(')[1].split('export async function requireMfa(')[0];assert.match(block,/email_confirmed_at/);assert.doesNotMatch(block,/requireMfa|aal2|getAuthenticatorAssuranceLevel/)}],
  ['admin guard retains role and AAL2 verification',()=>{const b=auth.split('export async function requirePlatformAdmin()')[1].split('export async function requireSeller()')[0];assert.match(b,/platform_roles/);assert.match(b,/requireMfa\(client/)}],
- ['seller guard retains active or paused membership and AAL2',()=>{const b=auth.split('export async function requireSeller()')[1].split('export async function getWorkspaceAccess(')[0];assert.match(b,/shop_members/);assert.match(b,/requireMfa\(client/)}],
+ ['seller routine guard requires active/paused membership and verified TOTP enrollment',()=>{const b=auth.split('export async function requireSeller()')[1].split('export async function getWorkspaceAccess(')[0];assert.match(b,/shop_members/);assert.match(b,/\['active','paused'\]/);assert.match(b,/totp\?\.some\(f=>f.status==='verified'\)/);assert.doesNotMatch(b,/await requireMfa/)}],
  ['requireMfa verifies AAL2 via Supabase authenticator assurance',()=>assert.match(auth,/data\?\.currentLevel!=='aal2'/)],
  ['password + otp login keep existing authentication',()=>{assert.match(form,/auth\.signInWithPassword/);assert.match(form,/auth\.signInWithOtp/)}],
  ['registration needs email/password but does not enroll MFA',()=>{assert.match(form,/auth\.signUp/);assert.doesNotMatch(form,/auth\.mfa\.enroll/)}],

@@ -186,3 +186,6 @@
 .phase58-art-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .live-art-symbol,.live-detail-sigil{position:relative;z-index:1}
 .live-product-art .art-caption,.live-product-art .art-ribbon,.live-detail-cover .art-caption{z-index:2}
+
+.catalog-search{display:flex;gap:12px;flex:1;flex-wrap:wrap}.catalog-search .search-wrap{flex:1;min-width:200px}.catalog-pagination{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+@media(max-width:640px){.catalog-search{width:100%}.catalog-search .search-wrap{flex-basis:100%}.catalog-search .sort-wrap{flex:1}.catalog-search .btn{padding-inline:16px}}

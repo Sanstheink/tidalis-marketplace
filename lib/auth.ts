@@ -1,5 +1,7 @@
 import {redirect} from 'next/navigation';
 import {supabaseServer} from '@/lib/supabase/server';
+import {cookies} from 'next/headers';
+import {chooseSellerMembership,SELLER_SHOP_COOKIE} from '@/lib/seller-workspace';
 
 export async function getIdentity(){
   const client=await supabaseServer();
@@ -37,7 +39,7 @@ export async function requireSeller(){
   const {client,user}=await requireUser('/seller');
   // Lookup own membership first; self-read of shop_members never requires AAL2.
   const {data:members,error:memberError}=await client.from('shop_members')
-    .select('shop_id,role').eq('user_id',user.id).limit(10);
+    .select('shop_id,role').eq('user_id',user.id).order('shop_id');
   if(memberError||!members?.length)redirect('/sell/application');
   const {data:factors,error:factorError}=await client.auth.mfa.listFactors();
   if(factorError)redirect('/account?denied=mfa-unavailable');
@@ -45,17 +47,19 @@ export async function requireSeller(){
     redirect('/mfa?next=%2Fseller');
   const ids=members.map(m=>m.shop_id);
   const {data:shops,error:shopError}=await client.from('shops')
-    .select('id,name,status').in('id',ids).in('status',['active','paused']).limit(10);
+    .select('id,name,status').in('id',ids).in('status',['active','paused']).order('id');
   if(shopError||!shops?.length)redirect('/sell/application');
-  const member=members.find(m=>shops.some(shop=>shop.id===m.shop_id));
-  if(!member)redirect('/sell/application');
-  return {client,user,member};
+  const selected=(await cookies()).get(SELLER_SHOP_COOKIE)?.value;
+  const member=chooseSellerMembership(members,shops.map(shop=>shop.id),selected);
+  if(!member)redirect('/workspace?notice=choose-shop');
+  const shop=shops.find(shop=>shop.id===member.shop_id)!;
+  return {client,user,member,shop};
 }
 
 export async function getWorkspaceAccess(client:NonNullable<Awaited<ReturnType<typeof supabaseServer>>>,userId:string){
   const [admin,seller,applications]=await Promise.all([
     client.from('platform_roles').select('role').eq('user_id',userId).eq('role','admin').maybeSingle(),
-    client.from('shop_members').select('shop_id,role,shops!inner(name,status)').eq('user_id',userId).in('shops.status',['active','paused']).limit(5),
+    client.from('shop_members').select('shop_id,role,shops!inner(name,status)').eq('user_id',userId).in('shops.status',['active','paused']).order('shop_id'),
     client.from('seller_applications').select('id,status,shop_name,submitted_at').eq('user_id',userId).order('submitted_at',{ascending:false}).limit(1)
   ]);
   return {isAdmin:!admin.error&&Boolean(admin.data),shops:seller.data||[],lastApplication:applications.data?.[0]||null};

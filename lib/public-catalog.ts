@@ -3,6 +3,11 @@ import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
 import {type PublicProduct, type PublicShop, type PublicLicense, type PublicProductType} from '@/lib/public-catalog-shared';
+import {catalogFilters, type CatalogQuery} from '@/lib/catalog-query';
+
+export class CatalogUnavailableError extends Error {
+  constructor() { super('Public catalog temporarily unavailable'); this.name='CatalogUnavailableError'; }
+}
 // Using a cookie-free client avoids expanding public visibility via an admin/seller session.
 // Supabase RLS still applies, and every read below ALSO filters for publication.
 function publicClient() {
@@ -77,7 +82,7 @@ async function withPublicPreviews(products:PublicProduct[],client:NonNullable<Re
 
 export async function getPublicProducts(options: {limit?:number; type?:PublicProductType; shopId?:string} = {}): Promise<PublicProduct[]> {
   const client = publicClient();
-  if (!client) return [];
+  if (!client) throw new CatalogUnavailableError();
   const limit = Math.min(60, Math.max(1, options.limit ?? 24));
   let query = client.from('products')
     .select(PRODUCT_SELECTION)
@@ -86,7 +91,7 @@ export async function getPublicProducts(options: {limit?:number; type?:PublicPro
   if (options.type) query = query.eq('product_type', options.type);
   if (options.shopId) query = query.eq('shop_id',options.shopId);
   const {data,error} = await query;
-  if (error) { console.error('[Tidalis public catalog] read failed', error.code); return []; }
+  if (error) { console.error('[Tidalis public catalog] read failed', error.code); throw new CatalogUnavailableError(); }
   const visible=(data ?? []).flatMap(record => {
     const product = normalizeProduct(record as unknown as RecordLike);
     return product ? [product] : [];
@@ -94,16 +99,31 @@ export async function getPublicProducts(options: {limit?:number; type?:PublicPro
   return withPublicPreviews(visible,client);
 }
 
+export async function getPublicCatalogPage(query: CatalogQuery = {}, shopId?: string) {
+  const filters=catalogFilters(query);
+  const client=publicClient();
+  if(!client)throw new CatalogUnavailableError();
+  const {data,error}=await client.rpc('search_public_products',{
+    p_search:filters.q,p_type:filters.type,p_sort:filters.sort,p_page:filters.page,p_page_size:24,p_shop_id:shopId??null
+  });
+  if(error||!data||!Array.isArray(data.items)||!Number.isSafeInteger(data.total)||data.total<0){
+    console.error('[Tidalis public catalog] search unavailable',error?.code??'invalid-response');
+    throw new CatalogUnavailableError();
+  }
+  const products=(data.items as RecordLike[]).flatMap(row=>{const product=normalizeProduct(row);return product?[product]:[]});
+  return {products:await withPublicPreviews(products,client),total:data.total as number,pageSize:24,filters};
+}
+
 export async function getPublicProductByRoute(routeSlug: string): Promise<PublicProduct | null> {
   // Require a UUID suffix: a product slug alone isn't globally unique across shops.
   const match = routeSlug.match(/^(.+)--([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
   if (!match) return null;
   const client = publicClient();
-  if (!client) return null;
+  if (!client) throw new CatalogUnavailableError();
   const {data,error} = await client.from('products').select(PRODUCT_SELECTION)
     .eq('id',match[2]).eq('slug',match[1])
     .eq('status','published').eq('shop.status','active').maybeSingle();
-  if (error) { console.error('[Tidalis public product] read failed',error.code); return null; }
+  if (error) { console.error('[Tidalis public product] read failed',error.code); throw new CatalogUnavailableError(); }
   const normalized=data ? normalizeProduct(data as unknown as RecordLike) : null;
   if(!normalized)return null;
   return (await withPublicPreviews([normalized],client))[0]||null;
@@ -111,10 +131,10 @@ export async function getPublicProductByRoute(routeSlug: string): Promise<Public
 
 export async function getPublicShop(slug: string): Promise<PublicShop | null> {
   const client = publicClient();
-  if (!client) return null;
+  if (!client) throw new CatalogUnavailableError();
   const {data,error} = await client.from('shops')
     .select('id,slug,name,description').eq('slug',slug).eq('status','active').maybeSingle();
-  if (error) { console.error('[Tidalis public shop] read failed',error.code); return null; }
+  if (error) { console.error('[Tidalis public shop] read failed',error.code); throw new CatalogUnavailableError(); }
   return data ? {id:data.id,slug:data.slug,name:data.name,description:data.description ?? ''} : null;
 }
 

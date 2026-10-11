@@ -11,7 +11,7 @@ check('public storefront requires published products',publicCatalog.includes(".e
 check('public API uses only publishable/anon key',publicCatalog.includes('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') && !publicCatalog.includes('SERVICE_ROLE'));
 check('public metadata exposes only reviewed previews, never deliverables',publicCatalog.includes(".eq('is_delivery_file',false)") && publicCatalog.includes("createSignedUrls(paths,300)") && !publicCatalog.includes('is_delivery_file,true'));
 check('server-only read boundary',publicCatalog.includes("import 'server-only'") && !src('lib/public-catalog-shared.ts').includes('server-only'));
-check('home and shop query real data',home.includes('getPublicProducts(') && shop.includes('getPublicProducts(') && !home.includes("from '@/lib/catalog'") && !shop.includes("from '@/components/ShopGrid'"));
+check('home and shop query real data',home.includes('getPublicProducts(') && shop.includes('getPublicCatalogPage(') && !home.includes("from '@/lib/catalog'") && !shop.includes("from '@/components/ShopGrid'"));
 check('product detail does not expose checkout',detail.includes('getPublicProductByRoute(') && !detail.includes('ProductPurchase') && !detail.includes('addToCart'));
 check('public product page guards publication',publicCatalog.includes(".eq('slug',match[1])") && publicCatalog.includes(".eq('id',match[2])"));
 check('shop page queries active shops',shopPage.includes('getPublicShop(') && publicCatalog.includes(".eq('status','active').maybeSingle()"));

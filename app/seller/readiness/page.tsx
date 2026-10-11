@@ -19,6 +19,10 @@ const labels:Record<string,string>={
 const outcomes:Record<string,string>={submitted:'ส่งคำขอให้ Admin ตรวจแล้ว',failed:'ไม่สามารถส่งคำขอ กรุณาตรวจข้อมูลและสิทธิ์ MFA',forbidden:'เฉพาะ Owner/Manager ที่ผ่าน MFA เท่านั้น',paused:'พักหน้าร้านสาธารณะแล้ว ต้องได้รับอนุมัติอีกครั้งก่อนเปิด'};
 export default async function SellerReadiness({searchParams}:{searchParams:Promise<{notice?:string}>}){
   const [{client,member},params]=await Promise.all([requireSeller(),searchParams]);
+  if(!['owner','manager','artist'].includes(member.role))return <div className="container page-pad">
+    <h1>ความพร้อมของร้าน</h1><p>การตรวจความพร้อมสินค้าเปิดให้ Owner, Manager และ Artist ของร้าน</p>
+    <Link className="btn btn-outline" href="/seller">กลับ Seller Studio</Link>
+  </div>;
   const [{data:shop,error:shopError},{data:request,error:requestError},{data:readiness,error:readinessError}]=await Promise.all([
     client.from('shops').select('id,name,slug,status').eq('id',member.shop_id).single(),
     client.from('shop_readiness_requests').select('id,status,review_note,submitted_at,reviewed_at').eq('shop_id',member.shop_id).maybeSingle(),

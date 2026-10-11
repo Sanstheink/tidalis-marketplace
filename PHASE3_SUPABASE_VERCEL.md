@@ -1,3 +1,5 @@
+> Historical phase guide. For 0.5.10 setup and deployment, use [the release guide](RELEASE_0_5_10.md). Seller intake is now controlled in the database, and the old legal environment flag is no longer used.
+
 # Marketplace Tidalis · Phase 3: Authentication / Buyer–Seller–Admin
 
 Phase 3 integrates the Next.js SSR structure with **Supabase Auth**, **Postgres Row Level Security**, a Workspace Switcher and protected Buyer/Seller/Admin routes. Phase 2 catalog and checkout remain **demo only**. **Do not process funds or enable real orders.**

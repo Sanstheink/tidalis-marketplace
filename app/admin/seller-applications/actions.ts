@@ -7,6 +7,16 @@ function readId(value:FormDataEntryValue|null){
   if(typeof value!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))return null;
   return value;
 }
+export async function changeSellerIntake(formData:FormData){
+  const {client}=await requirePlatformAdmin();
+  const state=formData.get('state');
+  if(!['open','closed'].includes(String(state))||formData.get('confirm')!=='yes')
+    redirect('/admin/seller-applications?review=confirmation-required');
+  const {error}=await client.rpc('set_seller_intake_open',{p_open:state==='open'});
+  if(error)redirect('/admin/seller-applications?review=intake-failed');
+  revalidatePath('/sell/apply');revalidatePath('/admin/seller-applications');
+  redirect('/admin/seller-applications?review=intake-updated');
+}
 export async function approveApplication(formData:FormData){
   const {client}=await requirePlatformAdmin();
   const id=readId(formData.get('applicationId'));

@@ -7,6 +7,7 @@ import {MailCheck,ShieldCheck,RefreshCcw,ArrowRight} from 'lucide-react';
 import {supabaseBrowser} from '@/lib/supabase/browser';
 import {safeNextPath} from '@/lib/auth-routes';
 import {OtpCodeInput} from '@/components/OtpCodeInput';
+import {isCompleteOtp} from '@/lib/otp';
 
 type Flow='signup'|'login'|'recovery';
 const FLOW:{[F in Flow]:{title:string;description:string;action:string}}={
@@ -35,7 +36,7 @@ export function VerifyEmailForm({initialEmail='',next='/account',flow='signup'}:
 
   async function submit(event:FormEvent){
     event.preventDefault();
-    if(!client||pending||code.length!==6)return;
+    if(!client||pending||!isCompleteOtp(code))return;
     setPending(true);setMessage('');setError(false);
     try{
       const {error:verifyError}=await client.auth.verifyOtp({email:email.trim(),token:code,type:flow==='login'?'email':flow});
@@ -78,7 +79,7 @@ export function VerifyEmailForm({initialEmail='',next='/account',flow='signup'}:
         <label htmlFor="verify-email">ที่อยู่อีเมล</label>
         <input id="verify-email" type="email" required autoComplete="email" value={email} onChange={e=>{setEmail(e.target.value);setCode('')}} placeholder="you@example.com"/>
         <OtpCodeInput value={code} onChange={value=>{setCode(value);setError(false)}} disabled={pending} error={error}/>
-        <button type="submit" className="btn btn-primary wide" disabled={!client||pending||code.length!==6||!email.trim()}>
+        <button type="submit" className="btn btn-primary wide" disabled={!client||pending||!isCompleteOtp(code)||!email.trim()}>
           {pending?'กำลังตรวจสอบ...':copy.action}<ArrowRight size={16}/>
         </button>
       </form>

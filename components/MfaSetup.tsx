@@ -6,6 +6,7 @@ import {ShieldCheck} from 'lucide-react';
 import {supabaseBrowser} from '@/lib/supabase/browser';
 import {safeNextPath} from '@/lib/auth-routes';
 import {OtpCodeInput} from '@/components/OtpCodeInput';
+import {isCompleteOtp} from '@/lib/otp';
 
 export function MfaSetup({next='/workspace'}:{next?:string}){
  const [factorId,setFactorId]=useState('');const [qr,setQr]=useState('');const [code,setCode]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [hasVerifiedFactor,setHasVerifiedFactor]=useState(false);
@@ -28,7 +29,7 @@ export function MfaSetup({next='/workspace'}:{next?:string}){
   if(data){setFactorId(data.id);setQr(data.totp.qr_code);setHasVerifiedFactor(false)}
  }
  async function resetUnverified(){const client=supabaseBrowser();if(!client||!factorId||hasVerifiedFactor)return;setLoading(true);setError('');const {error}=await client.auth.mfa.unenroll({factorId});setLoading(false);if(error){setError(error.message);return}setFactorId('');setQr('');setCode('')}
- async function verify(){const client=supabaseBrowser();if(!client||!factorId||code.length!==6)return;
+ async function verify(){const client=supabaseBrowser();if(!client||!factorId||!isCompleteOtp(code))return;
   setLoading(true);setError('');
   const {data:challenge,error:challengeError}=await client.auth.mfa.challenge({factorId});
   if(challengeError||!challenge){setError(challengeError?.message||'ไม่สามารถเริ่มการยืนยันได้');setLoading(false);return}
@@ -41,7 +42,7 @@ export function MfaSetup({next='/workspace'}:{next?:string}){
  {!hasVerifiedFactor&&<div><p>หากเคยลงทะเบียนแล้วแต่ไม่มี QR ให้เริ่มตั้งค่า Factor ที่ยังไม่ยืนยันใหม่ได้</p>{!qr&&<button type="button" className="btn btn-outline" onClick={resetUnverified} disabled={loading}>เริ่มตั้งค่า MFA ใหม่</button>}</div>}
  {qr&&<div style={{background:'white',padding:15,display:'inline-flex',margin:'15px 0'}}><img src={qr} alt="สแกน QR ด้วยแอป Authenticator" width={200} height={200}/></div>}
  <OtpCodeInput value={code} onChange={setCode} disabled={loading} error={Boolean(error)} label={hasVerifiedFactor?'รหัสจากแอป Authenticator':'รหัสจากแอปเพื่อเปิดใช้งาน MFA'}/>
- <button className="btn btn-primary wide" onClick={verify} disabled={loading||code.length!==6}>ยืนยันรหัสและดำเนินการต่อ</button></>}
+ <button className="btn btn-primary wide" onClick={verify} disabled={loading||!isCompleteOtp(code)}>ยืนยันรหัสและดำเนินการต่อ</button></>}
  {error&&<div role="alert" className="form-message">{error}</div>}
  <p className="helper">อย่าแชร์ QR หรือรหัส TOTP กับผู้อื่น และตั้งค่าวิธีกู้คืนการเข้าถึงบัญชีกับผู้ดูแลอย่างปลอดภัย</p><Link href="/workspace">กลับไปเลือก Workspace</Link></div>
 }

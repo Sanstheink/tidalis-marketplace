@@ -1,3 +1,5 @@
+> Historical phase guide. For 0.5.10 setup and deployment, use [the release guide](RELEASE_0_5_10.md). Seller intake is now controlled in the database, and the old legal environment flag is no longer used.
+
 # Marketplace Tidalis — Phase 4: Seller Onboarding & Admin Review
 
 > **Important: Production database.** This update is not installed automatically. Applying `004_seller_onboarding.sql` changes database privileges, functions, indexes and a trigger. Review with a qualified DBA and make a verified backup first. Test on a separate **schema-identical non-production clone** before any Production deployment. Never publish placeholder legal terms just to unlock signup.

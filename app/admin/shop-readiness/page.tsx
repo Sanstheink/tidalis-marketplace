@@ -10,8 +10,10 @@ export default async function AdminShopReadiness({searchParams}:{searchParams:Pr
     .eq('status','submitted').order('submitted_at',{ascending:true}).limit(100);
   const {data:activeShops,error:activeError}=await client.from('shops').select('id,name,slug').eq('status','active').order('created_at',{ascending:false}).limit(100);
   const blockers=new Map<string,string[]>();
+  const unavailable=new Set<string>();
   await Promise.all((data||[]).map(async req=>{
-    const {data:values}=await client.rpc('tidalis_shop_readiness_blockers',{p_shop_id:req.shop_id});
+    const {data:values,error:blockerError}=await client.rpc('tidalis_shop_readiness_blockers',{p_shop_id:req.shop_id});
+    if(blockerError||!Array.isArray(values))unavailable.add(req.id);
     blockers.set(req.id,Array.isArray(values)?values:[]);
   }));
   return <div className="container page-pad policy-manager-page"><div className="page-heading"><div className="eyebrow">ADMIN / SHOP OPENING</div><h1>Review <em>shop readiness.</em></h1><p>เปิดหน้าร้านสาธารณะหลังยืนยัน Seller Approval และนโยบายร้าน ไม่เปิดระบบรับเงิน</p></div>
@@ -19,8 +21,9 @@ export default async function AdminShopReadiness({searchParams}:{searchParams:Pr
     {params.notice&&notices[params.notice]&&<div role="status" className="phase4-alert">{notices[params.notice]}</div>}
     {error&&<div role="alert" className="phase4-alert">อ่านคำขอไม่ได้: {error.code}</div>}
     <div className="policy-version-list">{(data||[]).map(req=>{const s=Array.isArray(req.shops)?req.shops[0]:req.shops;const missing=blockers.get(req.id)||[];return <article key={req.id} className="phase4-card"><h2>{s?.name||req.shop_id}</h2><p>ร้าน {s?.status} · ส่งคำขอ {new Date(req.submitted_at).toLocaleDateString('th-TH')}</p><p>Seller: {req.seller_note||'ไม่มีหมายเหตุ'}</p>
+      {unavailable.has(req.id)&&<div role="alert" className="phase5-note">ประเมินความพร้อมไม่สำเร็จ กรุณาลองใหม่ก่อนอนุมัติ</div>}
       {missing.length>0&&<div role="alert" className="phase5-note">ความพร้อมเปลี่ยนไประหว่างรอตรวจ: {missing.join(', ')} — ห้ามอนุมัติ</div>}
-      <form action={reviewShopReadiness} className="phase4-action-form"><input type="hidden" name="id" value={req.id}/><label>การตัดสินใจ<select name="decision" defaultValue="needs_information" required><option value="needs_information">ขอข้อมูลเพิ่มเติม</option><option value="rejected">ไม่อนุมัติ</option><option value="approved" disabled={missing.length>0}>อนุมัติเปิดหน้าร้าน</option></select></label><label>เหตุผล / บันทึกผลตรวจ<textarea name="note" rows={3} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" name="confirmed" value="yes"/>ยืนยันว่าตรวจสถานะร้านและนโยบายจริงครบแล้ว (บังคับสำหรับอนุมัติ)</label><button className="btn btn-primary" type="submit">บันทึกผลตรวจ</button></form></article>})}
+      <form action={reviewShopReadiness} className="phase4-action-form"><input type="hidden" name="id" value={req.id}/><label>การตัดสินใจ<select name="decision" defaultValue="needs_information" required><option value="needs_information">ขอข้อมูลเพิ่มเติม</option><option value="rejected">ไม่อนุมัติ</option><option value="approved" disabled={missing.length>0||unavailable.has(req.id)}>อนุมัติเปิดหน้าร้าน</option></select></label><label>เหตุผล / บันทึกผลตรวจ<textarea name="note" rows={3} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" name="confirmed" value="yes"/>ยืนยันว่าตรวจสถานะร้านและนโยบายจริงครบแล้ว (บังคับสำหรับอนุมัติ)</label><button className="btn btn-primary" type="submit">บันทึกผลตรวจ</button></form></article>})}
     </div>{!error&&!data?.length&&<div className="empty-state">ยังไม่มีคำขอเปิดร้านรอตรวจ</div>}
     <section className="section"><h2>ร้านที่เปิดอยู่ · Emergency Pause</h2><p>Admin พักร้านได้ทันที หากมีข้อร้องเรียนด้านนโยบายหรือไฟล์ การเปิดใหม่ต้องผ่านการตรวจซ้ำ</p>
       {activeError&&<p role="alert">อ่านรายชื่อร้าน active ไม่สำเร็จ: {activeError.code}</p>}

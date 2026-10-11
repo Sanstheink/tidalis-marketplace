@@ -79,6 +79,6 @@ export default async function PlatformPolicies({searchParams}:{searchParams:Prom
         <button type="submit" className="btn btn-primary">เผยแพร่ {p.policy_type} v{p.version}</button>
       </form>
     </section>)}
-    <div className="info-panel">เมื่อเผยแพร่แล้ว ให้เปิด NEXT_PUBLIC_LEGAL_DOCUMENTS_APPROVED=true บน Vercel และ Redeploy <strong>หลังจาก</strong> ตรวจเอกสารจริงเรียบร้อยเท่านั้น</div>
+    <div className="info-panel">เมื่อตรวจเอกสารจริงและเผยแพร่ Seller Agreement แล้ว ให้เปิดรับสมัครจาก <Link href="/admin/seller-applications" className="text-link">หน้าการรับสมัครผู้ขาย</Link></div>
   </div>;
 }

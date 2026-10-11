@@ -9,10 +9,13 @@ export default async function AdminProductReviews({searchParams}:{searchParams:P
     .select('id,name,description,product_type,shop_id,submitted_at,shops!inner(name,slug,status)')
     .eq('status','under_review').order('submitted_at',{ascending:true}).limit(100);
   const notes=new Map<string,string[]>();const previews=new Map<string,string>();const deliveries=new Map<string,string[]>();const licenses=new Map<string,{usage_type:string;price_minor:number;terms:string}[]>();
+  const unavailable=new Set<string>();
   await Promise.all((data||[]).map(async p=>{
-    const {data:issues}=await client.rpc('tidalis_product_publish_blockers',{p_product_id:p.id});
+    const {data:issues,error:blockerError}=await client.rpc('tidalis_product_publish_blockers',{p_product_id:p.id});
+    if(blockerError||!Array.isArray(issues))unavailable.add(p.id);
     notes.set(p.id,Array.isArray(issues)?issues:[]);
-    const {data:prices}=await client.from('product_license_prices').select('usage_type,price_minor,terms').eq('product_id',p.id);
+    const {data:prices,error:priceError}=await client.from('product_license_prices').select('usage_type,price_minor,terms').eq('product_id',p.id);
+    if(priceError||prices?.length!==2)unavailable.add(p.id);
     licenses.set(p.id,prices||[]);
     const {data:files}=await client.from('product_files').select('file_path')
        .eq('product_id',p.id).eq('is_delivery_file',false).limit(1);
@@ -32,8 +35,9 @@ export default async function AdminProductReviews({searchParams}:{searchParams:P
       {previews.get(p.id)?<p><a href={previews.get(p.id)} target="_blank" rel="noopener noreferrer">เปิดภาพตัวอย่างส่วนตัวเพื่อตรวจ ↗</a></p>:<p role="alert">ยังไม่สามารถตรวจภาพได้ — ห้ามอนุมัติ</p>}
       {p.product_type!=='commission'&&<p>ไฟล์ส่งมอบส่วนตัวที่ตรวจได้: {deliveries.get(p.id)?.length||0} ไฟล์ {deliveries.get(p.id)?.map((url,i)=><a key={i} href={url} className="text-link" target="_blank" rel="noopener noreferrer">ตรวจไฟล์ {i+1} ↗ </a>)}</p>}
       {missing.length>0&&<p className="phase5-note" role="alert">ข้อกำหนดไม่ครบ: {missing.join(', ')}</p>}
+      {unavailable.has(p.id)&&<p className="phase5-note" role="alert">ตรวจข้อกำหนดหรือราคาไม่สำเร็จ กรุณาลองใหม่ก่อนอนุมัติ</p>}
       <p className="phase5-help">โปรดตรวจไฟล์ส่งมอบและเงื่อนไขทั้งสอง License ผ่านบัญชี Seller/ระบบตรวจภายในก่อนกดอนุมัติ ระบบยังไม่มี Anti-malware อัตโนมัติ</p>
-      <form action={reviewProductPublication} className="phase4-action-form"><input type="hidden" name="id" value={p.id}/><label>ผลตรวจ<select name="decision" defaultValue="changes_requested"><option value="changes_requested">ขอแก้ไข</option><option value="rejected">ไม่อนุมัติ</option><option value="approved" disabled={missing.length>0||s?.status!=='active'||!previews.get(p.id)||(p.product_type!=='commission'&&!deliveries.get(p.id)?.length)}>อนุมัติและเผยแพร่</option></select></label><label>เหตุผล / หมายเหตุ<textarea name="note" maxLength={1500} rows={3}/></label><label className="checkbox-label"><input type="checkbox" name="confirmed" value="yes"/>ตรวจงาน ภาพ ไฟล์ License และสิทธิ์การเผยแพร่ครบแล้ว (บังคับเมื่ออนุมัติ)</label><button type="submit" className="btn btn-primary">บันทึกผลตรวจ</button></form>
+      <form action={reviewProductPublication} className="phase4-action-form"><input type="hidden" name="id" value={p.id}/><label>ผลตรวจ<select name="decision" defaultValue="changes_requested"><option value="changes_requested">ขอแก้ไข</option><option value="rejected">ไม่อนุมัติ</option><option value="approved" disabled={unavailable.has(p.id)||missing.length>0||s?.status!=='active'||!previews.get(p.id)||(p.product_type!=='commission'&&!deliveries.get(p.id)?.length)}>อนุมัติและเผยแพร่</option></select></label><label>เหตุผล / หมายเหตุ<textarea name="note" maxLength={1500} rows={3}/></label><label className="checkbox-label"><input type="checkbox" name="confirmed" value="yes"/>ตรวจงาน ภาพ ไฟล์ License และสิทธิ์การเผยแพร่ครบแล้ว (บังคับเมื่ออนุมัติ)</label><button type="submit" className="btn btn-primary">บันทึกผลตรวจ</button></form>
     </article>})}</div>{!error&&!data?.length&&<div className="empty-state">ไม่มีสินค้าอยู่ระหว่างรอตรวจ</div>}
   </div>;
 }

@@ -1,3 +1,5 @@
+> Historical phase guide. For 0.5.10 setup and deployment, use [the release guide](../RELEASE_0_5_10.md). Seller intake is now controlled in the database, and the old legal environment flag is no longer used.
+
 # Database security and migration notes
 
 1. **These migrations are NOT applied to a live project.** Review schema, RLS, grants, tax fields, required legal notices and storage policies before applying in a staging Supabase project.

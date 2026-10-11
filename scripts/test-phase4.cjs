@@ -12,7 +12,7 @@ const cases=[
   ['production policies require published effective version and approved_by',()=>{
     assert.match(sql,/status='published'\s+and approved_by is not null and effective_from<=now\(\)/);
     assert.match(apply,/\.eq\('status','published'\)/);
-    assert.match(apply,/NEXT_PUBLIC_LEGAL_DOCUMENTS_APPROVED/);
+    assert.match(apply,/marketplace_settings/);assert.match(apply,/seller_intake_open===true/);
   }],
   ['acceptance is timestamped by DB and pinned to policy version',()=>{
     assert.match(sql,/agreement_version_id uuid references/);

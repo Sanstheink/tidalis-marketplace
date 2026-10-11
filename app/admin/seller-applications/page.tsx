@@ -1,5 +1,5 @@
 import {requirePlatformAdmin} from '@/lib/auth';
-import {approveApplication,reviewApplication} from './actions';
+import {approveApplication,reviewApplication,changeSellerIntake} from './actions';
 
 const statusNames:Record<string,string>={submitted:'รอพิจารณา',under_review:'กำลังตรวจสอบ',
   needs_information:'ขอข้อมูลเพิ่มเติม',approved:'อนุมัติแล้ว',rejected:'ปฏิเสธ',withdrawn:'ถอนใบสมัคร'};
@@ -7,19 +7,33 @@ const notices:Record<string,string>={approved:'อนุมัติและส
   'approval-failed':'อนุมัติไม่สำเร็จ โปรดตรวจ Agreement, MFA หรือ URL ร้าน และตรวจฐานข้อมูล Log',
   'review-failed':'เปลี่ยนสถานะไม่สำเร็จ โปรดตรวจ MFA และสถานะใบสมัคร',
   'invalid-reason':'กรุณาระบุเหตุผลอย่างน้อย 12 ตัวอักษร',
-  'confirmation-required':'ต้องยืนยันการอนุมัติร้านก่อนดำเนินการ'};
+  'confirmation-required':'ต้องยืนยันก่อนดำเนินการ',
+  'intake-failed':'เปลี่ยนสถานะรับสมัครไม่สำเร็จ โปรดตรวจ MFA และ Seller Agreement ที่เผยแพร่แล้ว',
+  'intake-updated':'เปลี่ยนสถานะรับสมัครแล้ว'};
 
 export default async function Applications({searchParams}:{searchParams:Promise<{review?:string}>}){
   const {client}=await requirePlatformAdmin();
-  const [{data,error},{review}]=await Promise.all([
+  const [{data,error},{review},{data:intake,error:intakeError}]=await Promise.all([
     client.from('seller_applications').select('id,user_id,shop_name,requested_slug,portfolio_url,description,status,submitted_at,agreement_version_id,review_note')
-      .order('submitted_at',{ascending:false}).limit(60),searchParams
+      .order('submitted_at',{ascending:false}).limit(60),searchParams,
+    client.from('marketplace_settings').select('seller_intake_open').eq('singleton',true).single()
   ]);
   return <div className="container page-pad">
     <div className="page-heading"><div className="eyebrow">TIDALIS ADMIN / PHASE 4</div>
       <h1>Seller <em>applications.</em></h1>
       <p>ตรวจ Portfolio, ข้อตกลง และคำอธิบายก่อนตัดสินใจ การสร้างร้านเกิดขึ้นเฉพาะเมื่อกดอนุมัติ</p></div>
     {review&&notices[review]&&<div role="status" className="phase4-alert">{notices[review]}</div>}
+    <section className="phase4-card"><h2>การรับสมัครผู้ขาย</h2>
+      {intakeError?<p role="alert">ตรวจสถานะรับสมัครไม่สำเร็จ กรุณาลองใหม่</p>:<>
+        <p>สถานะปัจจุบัน: <strong>{intake?.seller_intake_open?'เปิดรับสมัคร':'ปิดรับสมัคร'}</strong></p>
+        <p>การเปิดรับสมัครต้องมี Seller Agreement ที่ผ่านการอนุมัติและเผยแพร่แล้ว</p>
+        <form action={changeSellerIntake} className="phase4-action-form">
+          <input type="hidden" name="state" value={intake?.seller_intake_open?'closed':'open'}/>
+          <label className="checkbox-label"><input type="checkbox" name="confirm" value="yes" required/>ยืนยันการเปลี่ยนสถานะรับสมัคร</label>
+          <button className="btn btn-outline" type="submit">{intake?.seller_intake_open?'ปิดรับสมัคร':'เปิดรับสมัคร'}</button>
+        </form>
+      </>}
+    </section>
     {error&&<div className="legal-alert" role="alert">ไม่สามารถอ่านรายการสมัครได้ โปรดตรวจสิทธิ์ Admin, MFA และ Migration</div>}
     <div className="phase4-application-grid">{data?.map(app=><article className="phase4-card" key={app.id}>
       <div className="phase4-status-heading"><div><span className="eyebrow">SELLER REVIEW</span><h2>{app.shop_name}</h2></div>

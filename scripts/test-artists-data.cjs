@@ -26,6 +26,7 @@ const sandbox={
   process:{env:{NEXT_PUBLIC_SUPABASE_URL:'https://example.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'test-public-key'}},
   require(spec){if(spec==='server-only')return {};
     if(spec==='@supabase/supabase-js')return {createClient:()=>spy()};
+    if(spec==='@/lib/catalog-query')return require('../tests/unit/load-typescript.cjs')('lib/catalog-query.ts');
     throw Error('Unexpected runtime dependency: '+spec);
   }
 };

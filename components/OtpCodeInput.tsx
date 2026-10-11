@@ -1,6 +1,7 @@
 'use client';
 
 import {useId, useRef, type ClipboardEvent, type KeyboardEvent} from 'react';
+import {otpSlots, otpValue} from '@/lib/otp';
 
 /** Controlled six-cell OTP input. Code is never logged or stored in localStorage. */
 export function OtpCodeInput({value,onChange,disabled=false,error=false,label='รหัสยืนยัน 6 หลัก'}:{
@@ -12,14 +13,14 @@ export function OtpCodeInput({value,onChange,disabled=false,error=false,label='�
 }){
   const id=useId();
   const fields=useRef<Array<HTMLInputElement|null>>([]);
-  const digits=value.replace(/\D/g,'').slice(0,6).split('');
+  const digits=otpSlots(value);
   const go=(position:number)=>fields.current[Math.max(0,Math.min(5,position))]?.focus();
   function fill(raw:string,position:number){
     const clean=raw.replace(/\D/g,'').slice(0,6);
     if(!clean)return;
     const next=Array.from({length:6},(_,i)=>digits[i]||'');
     for(let i=0;i<clean.length&&position+i<6;i++)next[position+i]=clean[i];
-    onChange(next.join('').slice(0,6));
+    onChange(otpValue(next));
     go(Math.min(position+clean.length,5));
   }
   function keyDown(event:KeyboardEvent<HTMLInputElement>,i:number){
@@ -27,9 +28,9 @@ export function OtpCodeInput({value,onChange,disabled=false,error=false,label='�
       event.preventDefault();
       const next=Array.from({length:6},(_,index)=>digits[index]||'');
       if(next[i])next[i]='';else if(i>0){next[i-1]='';go(i-1)}
-      onChange(next.join(''));
+      onChange(otpValue(next));
     }else if(event.key==='Delete'){
-      event.preventDefault();const next=Array.from({length:6},(_,index)=>digits[index]||'');next[i]='';onChange(next.join(''));
+      event.preventDefault();const next=Array.from({length:6},(_,index)=>digits[index]||'');next[i]='';onChange(otpValue(next));
     }else if(event.key==='ArrowLeft'){event.preventDefault();go(i-1)}
     else if(event.key==='ArrowRight'){event.preventDefault();go(i+1)}
     else if(event.key==='Home'){event.preventDefault();go(0)}
@@ -65,7 +66,7 @@ export function OtpCodeInput({value,onChange,disabled=false,error=false,label='�
           if(input.length>1){fill(input,i);return}
           const next=Array.from({length:6},(_,index)=>digits[index]||'');
           next[i]=input;
-          onChange(next.join(''));
+          onChange(otpValue(next));
           if(input)go(i+1);
         }}/>) }
     </div>
