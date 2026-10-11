@@ -12,7 +12,7 @@ function fnBlock(s,name){const at=s.indexOf(`create or replace function public.$
 function policyBody(name){let at=sql.indexOf(`create policy ${name} `);assert.ok(at>=0,`missing ${name}`);return sql.slice(at,sql.indexOf('\n);',at)+3)}
 
 test('legacy seller member helper remains AAL2-only',()=>{assert.match(old,/create or replace function public\.is_shop_member[\s\S]*?'aal2'/);assert.doesNotMatch(sql,/create or replace function public\.is_shop_member\s*\(/)});
-test('platform admin AAL2 remains untouched',()=>{assert.match(guard,/await requireMfa\(client,'\/admin'\)/);assert.doesNotMatch(sql,/create or replace function public\.is_platform_admin\s*\(/)});
+test('platform admin AAL2 remains untouched',()=>{assert.match(guard,/await requireMfa\(client,next\)/);assert.doesNotMatch(sql,/create or replace function public\.is_platform_admin\s*\(/)});
 test('AAL1 helper uses live verified TOTP enrollment',()=>{const x=fnBlock(sql,'tidalis_seller_routine_access');for(const pat of [/security definer/i,/set search_path = ''/,/auth\.mfa_factors/,/f\.status='verified'/,/f\.factor_type='totp'/,/m\.user_id=\(select auth\.uid\(\)\)/,/s\.status in \('active','paused'\)/,/m\.role=any\(p_roles\)/])assert.match(x,pat)});
 test('AAL1 helper only callable by authenticated role',()=>assert.match(sql,/revoke all on function public\.tidalis_seller_routine_access\(uuid,text\[\]\) from public,anon;/));
 test('seller page denies users without shop membership or verified factor',()=>{assert.match(guard,/client\.from\('shop_members'\)/);assert.match(guard,/client\.auth\.mfa\.listFactors\(\)/);assert.match(guard,/totp\?\.some\(f=>f\.status==='verified'\)/)});

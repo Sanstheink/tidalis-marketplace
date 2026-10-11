@@ -13,7 +13,7 @@ export function PublicProductCard({product}:{product:PublicProduct}) {
       {product.exclusive && <span className="art-ribbon">EXCLUSIVE</span>}
     </div>
     <div className="product-info"><div><span className="product-type">{product.workType}</span><h3>{product.name}</h3><p>{product.shopName}</p></div>
-      <div className="product-card-bottom"><strong>{product.pricingMode==='quote'?'เริ่มต้น ':''}{publicPrice(startingPrice)}</strong><ArrowUpRight size={19}/></div>
+      <div className="product-card-bottom"><strong>{product.pricingMode==='quote'?'เริ่มต้น ':''}{publicPrice(startingPrice,product.currency)}</strong><ArrowUpRight size={19}/></div>
     </div>
   </Link>;
 }

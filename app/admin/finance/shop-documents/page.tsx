@@ -4,7 +4,7 @@ import {dateThai,uuid} from '@/lib/admin-finance';
 export const dynamic='force-dynamic';
 
 export default async function AdminShopDocuments({searchParams}:{searchParams:Promise<{shop?:string}>}){
- const {client}=await requirePlatformAdmin();const params=await searchParams;
+ const {client}=await requirePlatformAdmin('/admin/finance/shop-documents');const params=await searchParams;
  const {data:shops}=await client.from('shops').select('id,name').order('name').limit(500);
  const shop=uuid.test(params.shop||'')?params.shop||'':null;
  let query=client.from('financial_documents')

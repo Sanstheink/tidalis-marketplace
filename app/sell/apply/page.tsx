@@ -21,7 +21,7 @@ export default async function Apply(){
   const pending=last && ['submitted','under_review'].includes(last.status);
   const canEdit=last?.status==='needs_information';
   return <div className="container page-pad">
-    <div className="page-heading"><div className="eyebrow">BECOME A CREATOR / PHASE 4</div>
+    <div className="page-heading"><div className="eyebrow">BECOME A CREATOR</div>
       <h1>Open your <em>studio.</em></h1>
       <p>เปิดรับสมัครเฉพาะเมื่อ Seller Agreement ที่ผ่านการตรวจสอบและเผยแพร่มีผลใช้จริงเท่านั้น</p>
     </div>
@@ -29,7 +29,7 @@ export default async function Apply(){
     {(intakeError||applicationError)&&<div role="alert" className="form-message">ไม่สามารถตรวจสถานะการรับสมัครได้ กรุณาลองใหม่ภายหลัง</div>}
     {(!policy||!enabled)&&<div className="legal-alert">
       ขณะนี้ยังไม่เปิดรับสมัครผู้ขายจริง เนื่องจาก Seller Agreement หรือการอนุญาตเปิดรับสมัครยังไม่พร้อม
-      <div className="phase4-small">ไม่ต้องเปิดใช้งานเพียงเพื่อทดสอบบน Production — สามารถทดสอบหน้าจอโดยไม่ส่งข้อมูลจริงได้</div>
+      <div className="phase4-small">ติดตามข่าวการเปิดรับสมัครได้จากประกาศของแพลตฟอร์ม</div>
     </div>}
     {pending?<div className="phase4-card"><h2>ใบสมัครกำลังรอตรวจสอบ</h2><p>คุณมีคำขอที่อยู่ระหว่างพิจารณาแล้ว ไม่จำเป็นต้องส่งซ้ำ</p>
       <Link className="btn btn-outline" href="/sell/application">ติดตามสถานะใบสมัคร</Link></div>

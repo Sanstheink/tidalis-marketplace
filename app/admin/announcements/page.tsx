@@ -7,7 +7,7 @@ type Announcement={id:string;title:string;message:string;link_url:string|null;sh
  show_popup:boolean;priority:number;starts_at:string|null;ends_at:string|null;status:string;version:number};
 const notice:Record<string,string>={
  invalid:'ตรวจข้อมูลประกาศ วันที่ ลิงก์ และการยืนยันอีกครั้ง',
- failed:'บันทึกไม่สำเร็จ โปรดตรวจ Migration 010, MFA และสิทธิ์ฐานข้อมูล',
+ failed:'บันทึกไม่สำเร็จ โปรดยืนยัน Authenticator และลองบันทึกอีกครั้ง',
  saved:'บันทึกเป็น Draft แล้ว (ยังไม่เผยแพร่)',
  updated:'เปลี่ยนสถานะประกาศสำเร็จ'
 };
@@ -36,21 +36,21 @@ function Editor({item}:{item?:Announcement}) {
  </form>;
 }
 export default async function AdminAnnouncements({searchParams}:{searchParams:Promise<{notice?:string}>}){
- const {client}=await requirePlatformAdmin();const {notice:code}=await searchParams;
+ const {client}=await requirePlatformAdmin('/admin/announcements');const {notice:code}=await searchParams;
  const {data,error}=await client.from('platform_announcements')
   .select('id,title,message,link_url,show_ribbon,show_popup,priority,starts_at,ends_at,status,version')
   .order('created_at',{ascending:false}).limit(100);
  const items=(data||[]) as Announcement[];
  return <main className="container page-pad policy-manager-page">
-  <div className="page-heading"><div className="eyebrow">ADMIN / CONTENT</div><h1>Announcement <em>Manager.</em></h1>
-  <p>จัดการ Ribbon และ Popup หน้าแรก — ต้อง Admin MFA AAL2 เพื่อเผยแพร่</p></div>
+  <div className="page-heading"><div className="eyebrow">ADMIN / CONTENT</div><h1>ประกาศ<em>ถึงสมาชิก.</em></h1>
+  <p>เขียนข้อความ ตรวจตัวอย่าง และเลือกเวลาแสดงบนแถบประกาศหรือหน้าต่างต้อนรับ</p></div>
   <Link href="/admin" className="text-link">← Admin Console</Link>
   {code&&notice[code]&&<div className="phase4-alert" role="status">{notice[code]}</div>}
   {error&&<p role="alert">โหลดประกาศไม่ได้: {error.code} (ตรวจ Migration 010)</p>}
   <section className="phase4-card"><h2>สร้างประกาศ</h2><Editor/></section>
   <section className="section"><h2>ประวัติประกาศ · สูงสุด 100 รายการ</h2>
   <div className="policy-version-list">{items.map(item=><article className="phase4-card" key={item.id}>
-   <h3>{item.title} <span className="status-chip">{item.status}</span></h3>
+   <h3>{item.title} <span className="status-chip">{({draft:'ฉบับร่าง',published:'เผยแพร่แล้ว',archived:'ปิดแล้ว'} as Record<string,string>)[item.status]||item.status}</span></h3>
    <p style={{whiteSpace:'pre-wrap'}}>{item.message}</p>
    <p className="phase4-small">v{item.version} · {item.show_ribbon?'Ribbon ':''}{item.show_popup?'Popup ':''}
    · เริ่ม {item.starts_at?new Date(item.starts_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'}):'ทันที'}

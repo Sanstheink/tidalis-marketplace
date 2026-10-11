@@ -53,8 +53,8 @@ jobs:
         run: node scripts/setup-local-supabase.mjs
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - name: Sign in, order, cancel and verify isolation/concurrency
-        run: npx playwright test tests/browser/checkout-user.spec.ts
+      - name: Verify buyer, seller and admin flows with real Auth, MFA and private Storage
+        run: npx playwright test tests/browser/checkout-user.spec.ts tests/browser/operations-user.spec.ts
       - name: Stop local stack
         if: always()
         run: npx --yes supabase@2.120.0 stop --no-backup

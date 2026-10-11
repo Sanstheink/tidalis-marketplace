@@ -20,7 +20,7 @@ export default function PlatformAnnouncements({items}:{items:PublishedAnnounceme
   try {sessionStorage.setItem('tidalis:announcement:'+id,'closed');}catch{/* noop */}
  }
  return <>
-  {ribbon&&<aside role="status" style={{background:'#251a37',color:'#fff',padding:'10px 20px',
+  {ribbon&&<aside className="platform-ribbon" role="status" style={{background:'#251a37',color:'#fff',padding:'10px 20px',
     display:'flex',alignItems:'center',justifyContent:'center',gap:16,flexWrap:'wrap'}}>
     <span><strong>{ribbon.title}</strong> — {ribbon.message}</span>
     {safeUrl(ribbon.link_url)&&<a href={ribbon.link_url||undefined} style={{color:'#e2cfff',textDecoration:'underline'}}>รายละเอียด ↗</a>}

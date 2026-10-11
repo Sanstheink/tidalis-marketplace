@@ -21,7 +21,7 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
   const [{client,member},params]=await Promise.all([requireSeller(),searchParams]);
   if(!['owner','manager','artist'].includes(member.role))return <div className="container page-pad">
     <h1>ความพร้อมของร้าน</h1><p>การตรวจความพร้อมสินค้าเปิดให้ Owner, Manager และ Artist ของร้าน</p>
-    <Link className="btn btn-outline" href="/seller">กลับ Seller Studio</Link>
+    <Link className="btn btn-outline" href="/seller">กลับภาพรวมร้าน</Link>
   </div>;
   const [{data:shop,error:shopError},{data:request,error:requestError},{data:readiness,error:readinessError}]=await Promise.all([
     client.from('shops').select('id,name,slug,status').eq('id',member.shop_id).single(),
@@ -33,10 +33,10 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
   const blockers=Array.isArray(readiness)?readiness as string[]:[];
   const canSubmit=['owner','manager'].includes(member.role)&&shop?.status==='paused'&&elevated&&blockers.length===0&&['needs_information','rejected',undefined,null].includes(request?.status);
   return <div className="container page-pad phase5-page">
-    <div className="page-heading"><div className="eyebrow">SELLER / SHOP READINESS</div><h1>Prepare your <em>store.</em></h1><p>เปิดร้านให้สาธารณะเห็นหลัง Admin ตรวจสอบเท่านั้น ระบบรับเงินและ Checkout ยังไม่เปิด</p></div>
-    <p><Link href="/seller" className="text-link">← Seller Studio</Link> · <Link href="/seller/policies" className="text-link">นโยบายร้าน</Link> · <Link href="/seller/products" className="text-link">สินค้า</Link></p>
+    <div className="page-heading"><div className="eyebrow">SELLER / SHOP READINESS</div><h1>เตรียม<em>เปิดร้าน.</em></h1><p>เปิดหน้าร้านหลังแอดมินตรวจสอบ ตั้งค่าบัญชีรับเงินและสินค้าให้พร้อมก่อนรับคำสั่งซื้อ</p></div>
+    <p><Link href="/seller" className="text-link">← ภาพรวมร้าน</Link> · <Link href="/seller/policies" className="text-link">นโยบายร้าน</Link> · <Link href="/seller/products" className="text-link">สินค้า</Link></p>
     {params.notice&&outcomes[params.notice]&&<div className="phase4-alert" role="status">{outcomes[params.notice]}</div>}
-    {(shopError||requestError||readinessError)&&<div className="phase4-alert" role="alert">โหลดข้อมูลความพร้อมร้านไม่สำเร็จ กรุณาตรวจ Migration 008 และสิทธิ์ RLS ({readinessError?.code||shopError?.code||requestError?.code||'unknown'})</div>}
+    {(shopError||requestError||readinessError)&&<div className="phase4-alert" role="alert">โหลดข้อมูลความพร้อมร้านไม่สำเร็จ กรุณาลองอีกครั้งหรือติดต่อผู้ดูแล ({readinessError?.code||shopError?.code||requestError?.code||'unknown'})</div>}
     <div className="phase5-panel"><h2>{shop?.name||'ร้านของคุณ'} · {shop?.status||'—'}</h2><p>สถานะคำขอ: <strong>{request?.status||'ยังไม่ส่งคำขอ'}</strong></p>
       {request?.review_note&&<div className="phase5-note">ข้อความจาก Admin: {request.review_note}</div>}
       {shop?.status==='active'?<p role="status">ร้านเปิดให้เข้าชมแล้ว! <Link href={`/shops/${shop.slug}`} className="text-link">ดูหน้าร้านสาธารณะ →</Link></p>:null}

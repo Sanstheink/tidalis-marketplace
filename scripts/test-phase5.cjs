@@ -15,7 +15,7 @@ const checks=[
  ['Private bucket and per-shop storage ACL',sql.includes("'tidalis-product-files',false")&&sql.includes("create policy tidalis_catalog_files_insert")&&sql.includes("p.shop_id::text=(storage.foldername(storage.objects.name))[2]")],
  ['Upload registered only after Storage object ownership check',sql.includes('owner_id=auth.uid()::text')&&sql.includes('catalog_file_attached')],
  ['Editor supports product modes and license variants',editor.includes('commission')&&editor.includes('ready_made')&&editor.includes('digital_asset')&&editor.includes('personal')&&editor.includes('commercial')&&editor.includes('`${key}Price`')],
- ['Product writes use server-side role check, RPC only',actions.includes('requireSeller()')&&actions.includes("client.rpc('save_seller_product_draft'")&& !actions.includes(".from('products').insert")],
+ ['Product writes use server-side role check, RPC only',actions.includes('requireSeller()')&&actions.includes("client.rpc('save_seller_product_priced_draft'")&& !actions.includes(".from('products').insert")],
  ['Files restricted to private bucket with size guards',uploader.includes('const BUCKET=\'tidalis-product-files\'')&&uploader.includes('file.size>limit')&&uploader.includes('attach_seller_product_file')],
  ['Seller catalog offers create and edit',listing.includes('/seller/products/new')&&edit.includes('<SellerProductEditor')&&edit.includes('<SellerProductFiles')]
 ];

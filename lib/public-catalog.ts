@@ -17,7 +17,7 @@ function publicClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-const PRODUCT_SELECTION = 'id,slug,name,description,product_type,pricing_mode,is_exclusive,stock,shop_id,shop:shops!inner(id,slug,name,status),work_type:shop_work_types(name),product_license_prices(usage_type,price_minor,terms)';
+const PRODUCT_SELECTION = 'id,slug,name,description,product_type,pricing_mode,is_exclusive,stock,currency,shop_id,shop:shops!inner(id,slug,name,status),work_type:shop_work_types(name),product_license_prices(usage_type,price_minor,terms)';
 
 type RecordLike = Record<string, unknown>;
 const single = (v: unknown): RecordLike | null => {
@@ -50,7 +50,7 @@ function normalizeProduct(row: RecordLike): PublicProduct | null {
     workType: asText(workType?.name) || 'Digital artwork',
     exclusive: row.is_exclusive === true,
     stock: typeof row.stock === 'number' ? row.stock : null,
-    licenses,
+    currency: ['THB','USD','LAK'].includes(asText(row.currency))?asText(row.currency):'THB', licenses,
   };
 }
 

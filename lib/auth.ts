@@ -22,11 +22,11 @@ export async function requireMfa(client:NonNullable<Awaited<ReturnType<typeof su
   if(error||data?.currentLevel!=='aal2')redirect(`/mfa?next=${encodeURIComponent(next)}`);
 }
 
-export async function requirePlatformAdmin(){
-  const {client,user}=await requireUser('/admin');
+export async function requirePlatformAdmin(next='/admin'){
+  const {client,user}=await requireUser(next);
   const {data,error}=await client.from('platform_roles').select('role').eq('user_id',user.id).eq('role','admin').maybeSingle();
   if(error||!data)redirect('/account?denied=admin');
-  await requireMfa(client,'/admin');
+  await requireMfa(client,next);
   return {client,user};
 }
 

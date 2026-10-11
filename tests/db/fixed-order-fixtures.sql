@@ -11,6 +11,9 @@ insert into public.platform_policy_versions(policy_type,version,title,content,st
 insert into public.shop_policy_versions(shop_id,policy_type,version,content,status,published_at,reviewed_by)
  select s.id,t,1,repeat('Synthetic local shop policy. ',25),'published',now(),'10000000-0000-4000-8000-000000000004'
  from public.shops s cross join unnest(array['refund','delivery','license']) t;
+insert into public.seller_applications(user_id,shop_name,requested_slug,portfolio_url,description,status,agreement_version_id,agreement_accepted_at,reviewed_by,reviewed_at,created_shop_id)
+ select s.owner_id,s.name,s.slug,'https://example.invalid/local-test-portfolio',repeat('Synthetic approved local test application. ',3),'approved',p.id,now(),'10000000-0000-4000-8000-000000000004',now(),s.id
+ from public.shops s cross join public.platform_policy_versions p where p.policy_type='seller-agreement' and p.status='published';
 insert into public.shop_readiness_requests(shop_id,status,reviewed_by,reviewed_at)
  select id,'approved','10000000-0000-4000-8000-000000000004',now() from public.shops;
 insert into public.seller_tax_profiles(shop_id,vat_status) select id,'not_registered' from public.shops;
