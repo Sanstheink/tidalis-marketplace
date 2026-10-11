@@ -3,7 +3,7 @@ import {Package,LibraryBig,ShieldQuestion,Settings,Paintbrush,FileText,ArrowRigh
 import {getWorkspaceAccess,requireUser} from '@/lib/auth';
 import {SignOut} from '@/components/SignOut';
 const tiles=[
- {title:'คำสั่งซื้อของฉัน',url:'/account/orders',icon:Package,desc:'ติดตามคำสั่งซื้อ (Backend การสั่งซื้อจริงยังปิด)'},
+ {title:'คำสั่งซื้อของฉัน',url:'/account/orders',icon:Package,desc:'ติดตามรายการจอง สถานะ และรายละเอียดคำสั่งซื้อ'},
  {title:'My Library',url:'/account/library',icon:LibraryBig,desc:'คลังไฟล์ดาวน์โหลดหลังการซื้อสำเร็จ'},
  {title:'งาน Commission',url:'/account',icon:Paintbrush,desc:'ติดตามบรีฟและงานของคุณ (กำลังพัฒนา)'},
  {title:'ข้อพิพาทและคืนเงิน',url:'/account/refunds',icon:ShieldQuestion,desc:'คำขอคืนเงินและประวัติการช่วยเหลือ'},

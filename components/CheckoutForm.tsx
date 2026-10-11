@@ -34,7 +34,7 @@ export default function Checkout(){
     if(files.some(f=>f.size>MAX_FILE_BYTES || !(f.type.startsWith('image/')||f.type==='application/pdf'))){setUploadError('เลือกเฉพาะไฟล์ภาพหรือ PDF ขนาดไม่เกิน 5 MB ต่อไฟล์');return}
     setUploadError('');setRefs(old=>[...old,...files]);
   };
-  const prevUrl=isDirect&&directProduct?`/products/${directProduct.slug}`:'/cart';
+  const prevUrl=isDirect&&directProduct?`/products/${directProduct.slug}`:'/preview/cart';
   const ready=accepted&&(!isCommission||brief.trim().length>=15);
   return <div className="container page-pad checkout-width">
     <Link className="back-link" href={prevUrl}><ArrowLeft size={16}/> กลับไปแก้รายการ</Link>

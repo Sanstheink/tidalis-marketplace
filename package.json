@@ -1,6 +1,6 @@
 {
   "name": "tidalis-marketplace",
-  "version": "0.5.10",
+  "version": "0.6.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -23,7 +23,7 @@
     "test:auth-mfa": "node scripts/test-auth-optional-mfa.cjs",
     "test:phase5-9": "node scripts/test-phase5-9.mjs",
     "test:unit": "node --test tests/unit/*.test.cjs",
-    "test:db": "node tests/db/regression.mjs",
+    "test:db": "node tests/db/regression.mjs && node tests/db/fixed-orders.mjs",
     "test:browser": "playwright test",
     "test": "node scripts/run-checks.mjs"
   },

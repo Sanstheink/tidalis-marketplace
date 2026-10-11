@@ -1,6 +1,8 @@
-# Marketplace Tidalis — 0.5.10
+# Marketplace Tidalis — 0.6.1
 
-Next.js marketplace with Supabase Auth, seller workspaces, moderated catalogue/policies, and admin operations. This branch includes Phase 5.9 and the 0.5.10 stability fixes. Public storefronts show published products from active shops; the purchase/payment flow remains disabled.
+Current feature release: **0.6.1 — fixed-price order reservations and commerce UI**. See [PHASE6_1_FIXED_ORDERS.md](PHASE6_1_FIXED_ORDERS.md). Real order creation stays disabled by default; payments and downloads remain gated for the next phase. Historical demo cart/checkout moved under `/preview`.
+
+Next.js marketplace with Supabase Auth, seller workspaces, moderated catalogue/policies, and admin operations. This branch adds fixed-price order reservations and a refreshed commerce UI on top of Phase 5.9 and 0.5.10. Public storefronts show published products from active shops; hosted order creation stays gated and payment/delivery remain disabled.
 
 See [RELEASE_0_5_10.md](RELEASE_0_5_10.md) for changes, actual test results, applied Supabase migrations, remaining test limits, and the Production rollout.
 
@@ -38,7 +40,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-`npm test` runs all historical checks, mocked read contracts, 11 unit cases and 35 isolated database regressions. CI also builds and runs browser checks using placeholder configuration; it never modifies a real Supabase project. The opt-in live browser suite is separate:
+`npm test` runs all historical checks, mocked read contracts, 14 unit cases and 55 isolated database regressions. CI builds core browser checks with placeholder configuration, then tests signed buyers against a fresh local Supabase Auth/Postgres/Storage stack. It never modifies the hosted project. The opt-in live browser suite is separate:
 
 ```bash
 TIDALIS_LIVE_TESTS=true npm run test:browser
@@ -50,6 +52,6 @@ Optional test-container settings: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` selects 
 
 ## Deployment
 
-Push a feature branch for review/Preview, then merge the verified changes into Vercel's configured Production Branch. Confirm the deployed source commit contains 0.5.10. Redeploy is appropriate for rebuilding that commit after configuration changes. Full instructions are in the release guide; Vercel deployment is left to the project owner.
+Push a feature branch for review/Preview, then merge the verified changes into Vercel's configured Production Branch. Confirm the deployed source commit contains 0.6.1 and its additive migration has been applied, with the live order gate still closed. Redeploy is appropriate for rebuilding that commit after configuration changes. Full instructions are in the release guide; Vercel deployment is left to the project owner.
 
 Phase-specific guides remain for historical context. Their old environment flags and rollout instructions are superseded by the release guide.
