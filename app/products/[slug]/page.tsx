@@ -2,7 +2,7 @@ import type {Metadata} from 'next';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {ArrowRight,ShieldCheck,Info} from 'lucide-react';
-import {getPublicProductByRoute,getPublicProducts} from '@/lib/public-catalog';
+import {getPublicProductByRoute,getPublicProducts,CatalogUnavailableError} from '@/lib/public-catalog';
 import {LivePurchase} from '@/components/LivePurchase';
 import {PublicProductCard} from '@/components/PublicProductCard';
 export const dynamic='force-dynamic';
@@ -15,7 +15,7 @@ export default async function ProductDetail({params}:{params:Promise<{slug:strin
   const {slug}=await params;
   const product=await getPublicProductByRoute(slug);
   if(!product)notFound();
-  const recommended=(await getPublicProducts({limit:8})).filter(p=>p.id!==product.id).slice(0,3);
+  const recommended=(await getPublicProducts({limit:8}).catch((error:unknown)=>{if(error instanceof CatalogUnavailableError)return [];throw error;})).filter(p=>p.id!==product.id).slice(0,3);
   return <div className="container page-pad">
     <div className="breadcrumb"><Link href="/">หน้าแรก</Link><span>/</span><Link href="/shop">สินค้า</Link><span>/</span><span>{product.name}</span></div>
     <div className="product-detail-grid">
