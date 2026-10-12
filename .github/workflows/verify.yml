@@ -1,0 +1,68 @@
+name: Verify marketplace
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:1
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-public-placeholder
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: browser-failures
+          path: |
+            playwright-report/
+            test-results/
+  user-flow:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Start isolated Supabase Auth, Postgres and Storage
+        run: npx --yes supabase@2.120.0 start -x realtime,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Provision local test accounts and catalog
+        run: node scripts/setup-local-supabase.mjs
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Verify buyer, seller and admin flows with real Auth, MFA and private Storage
+        run: npx playwright test tests/browser/checkout-user.spec.ts tests/browser/operations-user.spec.ts
+      - name: Stop local stack
+        if: always()
+        run: npx --yes supabase@2.120.0 stop --no-backup
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: checkout-ui
+          path: |
+            test-results/checkout-ui/
+            test-results/**/error-context.md
+          if-no-files-found: ignore

@@ -1,3 +1,5 @@
+> Historical phase guide. For 0.5.10 setup and deployment, use [the release guide](../RELEASE_0_5_10.md). Seller intake is now controlled in the database, and the old legal environment flag is no longer used.
+
 # Database security and migration notes
 
 1. **These migrations are NOT applied to a live project.** Review schema, RLS, grants, tax fields, required legal notices and storage policies before applying in a staging Supabase project.
@@ -10,3 +12,7 @@
 8. Define finance documents and VAT rule validation with a Thailand tax professional. A generated PDF is not automatically an approved e-Tax invoice.
 9. Legal policy pages are drafting placeholders and must not be used as binding agreements before approved publication with versioned acceptance.
 10. Add automated RLS integration tests with at least 2 shops and 2 buyers to verify isolation before any production launch.
+
+### Phase 3 (new)
+
+Review and apply `003_phase3_auth_hardening.sql` **after** 001 and 002 in a STAGING project. Its role helper replacements intentionally require `auth.jwt()->>'aal' = 'aal2'` for seller-private and platform-admin RLS operations, including the seller-approval RPC. They prevent raw PostgREST requests with an AAL1 session from bypassing MFA just because a screen hides a button. The user's own role and membership discovery remain readable via existing owner-only SELECT RLS so the workspace picker can show a login user's available spaces. Read `PHASE3_SUPABASE_VERCEL.md` before applying.
