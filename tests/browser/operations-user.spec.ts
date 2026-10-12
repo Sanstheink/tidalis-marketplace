@@ -120,6 +120,28 @@ test('shop pause, readiness request and admin opening preserve existing purchase
  await admin.goto('/admin/shop-readiness');const request=admin.locator('article').filter({hasText:'Moonlit Test Studio'});await request.locator('[name=decision]').selectOption('approved');await request.getByLabel(/ยืนยันว่าตรวจสถานะร้านและนโยบายจริงครบแล้ว/).check();await request.getByRole('button',{name:'บันทึกผลตรวจ',exact:true}).click();await expect(admin.locator('.phase4-alert[role=status]')).toContainText('บันทึกผลการตรวจคำขอแล้ว');expect((await buyer.goto('/shops/moonlit-test-studio'))!.status()).toBe(200);await seller.goto('/seller/readiness');await expect(seller.getByText('ร้านเปิดให้เข้าชมแล้ว!',{exact:false})).toBeVisible();await shot(seller,'shop-readiness-desktop');
 });
 
+test('commission response loss and reload reuse the committed request',async()=>{
+ const productId='30000000-0000-4000-8000-000000000004',path=`/account/commissions/new?product=${productId}`;
+ const brief='Synthetic isolated commission response-loss regression '+randomUUID();
+ let dropped=false;
+ await buyer.goto(path);
+ await buyer.route('**/account/commissions/new?product=*',async route=>{
+  if(!dropped&&route.request().method()==='POST'&&route.request().headers()['next-action']){
+   const response=await route.fetch();expect(response.status()).toBe(200);dropped=true;await route.abort('failed');
+  }else await route.continue();
+ });
+ await buyer.getByLabel('รายละเอียดงานและสิ่งที่ต้องการ').fill(brief);await buyer.getByLabel(/ฉันอ่านและยอมรับนโยบาย/).check();await buyer.getByRole('button',{name:'ส่งบรีฟให้ศิลปิน',exact:true}).click();
+ await expect(buyer.getByRole('alert')).toContainText('ยังยืนยันผลไม่ได้');expect(dropped).toBe(true);
+ const before=await service().from('orders').select('id').eq('buyer_note',brief);expect(before.error).toBeNull();expect(before.data).toHaveLength(1);
+ await buyer.unroute('**/account/commissions/new?product=*');await buyer.reload();
+ await buyer.getByLabel('รายละเอียดงานและสิ่งที่ต้องการ').fill(brief);await buyer.getByLabel(/ฉันอ่านและยอมรับนโยบาย/).check();await buyer.getByRole('button',{name:'ส่งบรีฟให้ศิลปิน',exact:true}).click();
+ await expect(buyer).toHaveURL(new RegExp(`/account/orders/${before.data![0].id}$`));
+ const after=await service().from('orders').select('id').eq('buyer_note',brief);expect(after.error).toBeNull();expect(after.data).toHaveLength(1);
+ await buyer.getByText('ยกเลิกคำขอก่อนชำระเงิน',{exact:true}).click();
+ const cancel=buyer.locator('form').filter({has:buyer.getByRole('button',{name:'ยกเลิกคำขอ',exact:true})});await cancel.getByLabel('เหตุผล',{exact:true}).fill('Synthetic isolated retry regression cleanup.');await cancel.getByRole('button',{name:'ยกเลิกคำขอ',exact:true}).click();
+ await expect(buyer.locator('.page-heading')).toContainText('ยกเลิกแล้ว');
+});
+
 test('commission quote, direct payment, private revision delivery, receipt and full refund work through the UI',async()=>{
  test.setTimeout(240000);
  await buyer.setViewportSize({width:1440,height:1000});await buyer.goto('/account/commissions/new?product=30000000-0000-4000-8000-000000000004');await buyer.getByLabel('รายละเอียดงานและสิ่งที่ต้องการ').fill('Synthetic isolated commission brief for one illustration, used only for full-stack verification.');await buyer.getByLabel(/ฉันอ่านและยอมรับนโยบาย/).check();await buyer.getByRole('button',{name:'ส่งบรีฟให้ศิลปิน',exact:true}).click();await expect(buyer).toHaveURL(/\/account\/orders\/[0-9a-f-]{36}$/);const id=buyer.url().split('/').at(-1)!;
@@ -150,4 +172,21 @@ test('self-service opens a shop immediately and complete zero-price products pub
 
 test('admin issues and prints a private zero-balance receipt without creating a payment',async()=>{
  await admin.goto('/admin/finance/documents');const zero=admin.locator('form').filter({has:admin.getByRole('button',{name:'ออกเอกสาร 0 บาท / ยอดศูนย์',exact:true})});await zero.getByLabel('ร้านผู้รับเอกสาร').selectOption('20000000-0000-4000-8000-000000000002');await zero.getByLabel('สกุลเงิน').selectOption('LAK');await zero.getByLabel('ชื่อผู้รับเอกสารจริง').fill('Local Other Seller');await zero.getByLabel('ที่อยู่ผู้รับเอกสารจริง').fill('Synthetic isolated recipient address 123.');await zero.getByLabel(/ฉันตรวจรอบบริการ ข้อมูลผู้ออกและผู้รับแล้ว/).check();await zero.getByRole('button',{name:'ออกเอกสาร 0 บาท / ยอดศูนย์',exact:true}).click();await expect(admin).toHaveURL(/\/admin\/finance\/documents\/[0-9a-f-]{36}$/);await expect(admin.locator('.receipt-sheet')).toContainText('0.00 ₭');await expect(admin.locator('.receipt-sheet')).toContainText('Local Other Seller');const id=admin.url().split('/').at(-1)!;const doc=await service().from('platform_billing_documents').select('payment_id,invoice_id,total_minor,issuance_source').eq('id',id).single();expect(doc.error).toBeNull();expect(doc.data).toMatchObject({payment_id:null,total_minor:0,issuance_source:'zero_balance'});expect(doc.data!.invoice_id).toBeTruthy();expect((await buyer.goto(`/admin/finance/documents/${id}`))!.status()).toBe(200);await expect(buyer).toHaveURL(/\/account\?denied=admin$/);await expect(buyer.locator('.receipt-sheet')).toHaveCount(0);await shot(admin,'zero-balance-receipt');
+});
+
+test('an enrolled AAL1 seller saves a private PDF and publishes only after MFA',async({browser})=>{
+ const context=await browser.newContext(),page=await context.newPage();
+ try{
+  await page.goto('/login?next=%2Fseller%2Fpolicies');await page.getByLabel('อีเมล',{exact:true}).fill('seller@tidalis-test.invalid');await page.getByLabel('รหัสผ่าน',{exact:true}).fill(password);await page.getByRole('button',{name:'เข้าสู่ระบบ',exact:true}).click();await expect(page).toHaveURL(/\/seller\/policies$/);
+  const composer=page.locator('section').filter({has:page.getByRole('heading',{name:'สร้างหรือแก้ไขนโยบายร้าน',exact:true})}).locator('form').first();
+  await composer.getByLabel('แนบเอกสาร PDF',{exact:true}).check();
+  await composer.locator('input[type=file]').setInputFiles({name:'synthetic-policy.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\n% Synthetic isolated policy file\n%%EOF')});
+  await composer.getByRole('button',{name:'บันทึก Draft',exact:true}).click();await expect(composer.getByRole('status')).toContainText('บันทึก Draft สำเร็จ');
+  const record=await service().from('shop_policy_versions').select('id,document_path,status').eq('shop_id',shop).eq('policy_type','refund').eq('source_type','pdf').eq('status','draft').single();expect(record.error).toBeNull();
+  const article=page.locator('article').filter({has:page.locator(`input[name=id][value="${record.data!.id}"]`)});await expect(article.getByRole('button',{name:'เผยแพร่นโยบายร้าน',exact:true})).toBeDisabled();
+  await page.getByRole('link',{name:'ยืนยัน Authenticator ก่อนเผยแพร่นโยบาย →',exact:true}).first().click();await expect(page).toHaveURL(/\/mfa\?/);await page.locator('.otp-cell').first().fill(totp(process.env.TIDALIS_TEST_SELLER_TOTP!));await page.getByRole('button',{name:'ยืนยันรหัสและดำเนินการต่อ'}).click();await expect(page).toHaveURL(/\/seller\/policies$/);
+  await article.locator('[name=confirmed]').check();await article.getByRole('button',{name:'เผยแพร่นโยบายร้าน',exact:true}).click();await expect(page).toHaveURL(/result=published/);
+  const published=await service().from('shop_policy_versions').select('status,document_path').eq('id',record.data!.id).single();expect(published.error).toBeNull();expect(published.data).toMatchObject({status:'published',document_path:record.data!.document_path});
+  const alteration=await service().from('shop_policy_versions').update({document_name:'changed.pdf'}).eq('id',record.data!.id);expect(alteration.error?.message).toContain('immutable');
+ }finally{await context.close()}
 });
