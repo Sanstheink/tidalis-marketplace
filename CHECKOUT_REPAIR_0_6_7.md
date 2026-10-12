@@ -1,6 +1,6 @@
 # Tidalis 0.6.7 — กู้คำสั่งซื้อหลังการเชื่อมต่อขาด
 
-แพตช์วันที่ 12 ตุลาคม 2026 ต่อจาก 0.6.6 บน commit `af21c20085f1bc4ea35986694857dac2bcfc245a` ของ PR #7
+เริ่มแพตช์วันที่ 12 ตุลาคม 2026 และยืนยันผลวันที่ 13 ตุลาคม 2026 (Asia/Bangkok) ต่อจาก 0.6.6 บน commit `af21c20085f1bc4ea35986694857dac2bcfc245a` ของ PR #7 ชุดแก้ไขอยู่ที่ [PR #9](https://github.com/Sanstheink/tidalis-marketplace/pull/9)
 
 ## ปัญหาที่ตรวจพบและแก้ไข
 
@@ -18,7 +18,10 @@ Recovery ใช้ session ผู้ซื้อและ RLS เดิม พ�
 - เพิ่ม unit regressions 9 กรณี: retry/remount, การแยกบัญชี/ร้านและข้อมูล v1, การแก้ payload ขณะยังไม่รู้ผล, storage อ่าน/เขียนล้มเหลว, ข้อมูลเสียหาย, การรักษาตะกร้าที่เปลี่ยนแล้ว, ownership filters, authentication/validation และ query failure
 - เพิ่ม browser regressions 3 กรณี: Exclusive ชิ้นสุดท้ายพร้อม recovery outage, storage ถูกบล็อกแล้วกลับมาใช้ได้ และรหัส recovery ที่คัดลอกจากผู้ซื้ออื่น
 - เสริม browser response-loss เดิมด้วยหมายเหตุที่ไม่ว่าง และตรวจเปิดรายการเดิมหลัง reload โดยไม่ต้องกรอกใหม่
-- ผล CI ฉบับสุดท้ายจะบันทึกหลังทดสอบครบ
+- เสริม concurrent PostgREST test: คำขอสองชุดใช้ UUID เดียวแต่ข้อความต่างกัน บันทึกสำเร็จเพียงหนึ่งชุด อีกชุดถูกปฏิเสธด้วย idempotency_conflict และตรวจฐานข้อมูลว่ามีหนึ่งรายการ
+- ผลสุดท้ายผ่าน 188 กรณี: unit 43, database regressions 114, browser ทั่วไป 10 และ user flows ที่ใช้ Auth/MFA/Postgres/Storage จริงในระบบแยก 21 พร้อม source/import checks, TypeScript และ production build
+
+ทั้ง jobs `verify` และ `user-flow` สำเร็จใน [GitHub Actions run 38293483131](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38293483131) บน code commit `212b6d419ef6a9cb66875fdbbfe7f9c5f878f32e` การอัปเดตหลังจากนี้แก้เฉพาะรายงานและ OPERATIONS.md ไม่เปลี่ยนโค้ดหรือ tests ที่ตรวจผ่าน
 
 ## การติดตั้งและขอบเขต
 

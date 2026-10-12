@@ -1,10 +1,10 @@
-# Tidalis 0.6.6 — คู่มือส่งต่อให้เจ้าของโครงการ
+# Tidalis 0.6.7 — คู่มือส่งต่อให้เจ้าของโครงการ
 
-ชุดแก้ไขล่าสุดเผยแพร่ที่ [PR #7](https://github.com/Sanstheink/tidalis-marketplace/pull/7), branch `fix/audit-integrity-20261012`, ต่อจาก [PR #6](https://github.com/Sanstheink/tidalis-marketplace/pull/6) และ dependencies เดิม ยังไม่ได้ merge เข้า main หรือ promote เว็บไซต์ production
+ชุดแก้ไขล่าสุดเผยแพร่ที่ [PR #9](https://github.com/Sanstheink/tidalis-marketplace/pull/9), branch `fix/checkout-resilience-20261012`, ต่อจาก [PR #7](https://github.com/Sanstheink/tidalis-marketplace/pull/7) และ dependencies เดิม ยังไม่ได้ merge เข้า main หรือ promote เว็บไซต์ production
 
 ## ลำดับติดตั้ง
 
-คำสั่งล่าสุดวันที่ 12 ตุลาคม 2026 อนุญาตให้แก้ข้อผิดพลาดและทดสอบต่อแล้ว โค้ดส่งขึ้น PR #7; เจ้าของยังจัดการข้อมูลบัญชีจริง การเพิ่ม env และ deploy เว็บไซต์เอง ห้ามติดตั้ง migration ที่บันทึกว่าติดตั้งแล้วซ้ำ
+คำสั่งล่าสุดวันที่ 13 ตุลาคม 2026 อนุญาตให้ทำแพตช์ถัดไปและทดสอบต่อแล้ว โค้ดส่งขึ้น PR #9; เจ้าของยังจัดการข้อมูลบัญชีจริง การเพิ่ม env และ deploy เว็บไซต์เอง ห้ามติดตั้ง migration ที่บันทึกว่าติดตั้งแล้วซ้ำ
 
 1. สำรองฐานข้อมูลและตรวจ migration history ของโครงการที่จะใช้ก่อน
 2. โครงการเดิม `fdwiwaawqrenxxvdsnqs` ติดตั้งไฟล์ต่อไปนี้เรียบร้อยแล้ว ส่วนฐานใหม่ให้ติดตั้งตามลำดับ:
@@ -85,10 +85,18 @@
 
 Vercel Git build check ผ่าน แต่บัญชีที่เชื่อมผ่านเครื่องมือจัดการไม่มีสิทธิ์ทีมโครงการ (403) ยังไม่มี production promotion หรือการยืนยัน active production commit ในการดำเนินการนี้ ไม่ได้เปลี่ยน env
 
-## แพตช์ 0.6.6 และผลตรวจล่าสุด
+## ประวัติแพตช์ 0.6.6
 
 ซ่อมฟังก์ชัน hosted ที่เก่า 5 ตัว เพิ่ม foreign-key indexes 44 จุด แก้ Commission retry หลังคำตอบหาย และการรายงานข้อผิดพลาด/แบ่งหน้าข้อมูลภาษี Migration `20261012132920_audit_integrity_repairs.sql` ติดตั้งแล้วตาม ledger ด้านบน ไม่ต้องเพิ่ม env
 
 โค้ด commit `faaddecbffaf54a77d014897b673a2432fd61d55` ผ่าน unit 34, database 114, browser ทั่วไป 10 และ user flows ที่ใช้ Auth/MFA/Storage จริงในระบบแยก 18 รวม 176 กรณี พร้อม typecheck/build ทั้งสอง jobs สำเร็จใน [GitHub Actions run 38272450706](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38272450706) Hosted SQL/RLS probes อีก 8/8 ผ่านและ rollback ข้อมูลทดสอบทั้งหมด
 
 ดู [AUDIT_REPAIR_0_6_6.md](AUDIT_REPAIR_0_6_6.md) สำหรับหลักฐาน schema ขอบเขตทดสอบ และ advisory ที่ยังมีอยู่ Leaked Password Protection ยังต้องตรวจ/เปิดผ่าน Dashboard ส่วนข้อมูลบัญชีรับเงินและการเผยแพร่สินค้าให้ใช้ข้อมูลจริงของเจ้าของก่อนเปิดขาย
+
+## แพตช์ 0.6.7
+
+Checkout ตรวจคำสั่งซื้อที่บันทึกแล้วจากรหัส retry ก่อนส่งใหม่ จึงเปิดรายการเดิมได้เมื่อคำตอบหาย แม้สต็อกชิ้นสุดท้ายถูกจองหรือหมายเหตุบนฟอร์มหายไปตอน reload หากพื้นที่จัดเก็บหรือการอ่านรายการเดิมล้มเหลวจะหยุดการส่งซ้ำและให้ตรวจอีกครั้ง รหัส UUID เดิมยังคงใช้เมื่อแก้ payload ระหว่างที่คำขอแรกอาจยังทำงานอยู่
+
+ไม่เพิ่ม migration หรือ env และไม่แก้ข้อมูลธุรกิจใน hosted Supabase การเปิดรายการเดิมตรวจสิทธิ์ผู้ซื้อและรักษารายการอื่นในตะกร้า ดูหลักฐานการทดสอบฉบับสุดท้ายใน [CHECKOUT_REPAIR_0_6_7.md](CHECKOUT_REPAIR_0_6_7.md)
+
+โค้ด `212b6d419ef6a9cb66875fdbbfe7f9c5f878f32e` ผ่าน 188 กรณี (unit 43 + database 114 + browser ทั่วไป 10 + user flows 21) พร้อม TypeScript/build ทั้ง jobs `verify` และ `user-flow` สำเร็จใน [run 38293483131](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38293483131) วันที่ 13 ตุลาคม 2026 (Asia/Bangkok)
