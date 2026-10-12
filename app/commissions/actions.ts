@@ -8,11 +8,12 @@ function text(form:FormData,key:string){return String(form.get(key)||'').trim();
 function uid(form:FormData,key:string){const id=text(form,key);return uuidPattern.test(id)?id:null;}
 function refresh(id:string){for(const path of [`/account/orders/${id}`,`/seller/orders/${id}`,'/account/orders','/seller/orders','/account/library',`/admin/orders/${id}`,'/admin/sales'])revalidatePath(path);}
 export async function requestCommission(form:FormData){
- const product=uid(form,'product'),key=uid(form,'key');if(!product||!key)redirect('/shop');const target=`/account/commissions/new?product=${product}`;
+ const product=uid(form,'product'),key=uid(form,'key');if(!product||!key)return {error:'invalid'};const target=`/account/commissions/new?product=${product}`;
  const {client}=await requireUser(target);const policies=form.getAll('policies').map(String);
- if(form.get('confirmed')!=='yes'||policies.some(p=>!uuidPattern.test(p)))redirect(target+'&notice=invalid');
+ if(form.get('confirmed')!=='yes'||policies.length!==8||policies.some(p=>!uuidPattern.test(p)))return {error:'invalid'};
  const {data,error}=await client.rpc('request_commission',{p_product:product,p_usage:text(form,'usage'),p_brief:text(form,'brief'),p_policies:policies,p_key:key});
- if(error)redirect(target+'&notice='+encodeURIComponent(error.message));revalidatePath('/account/orders');revalidatePath('/seller/orders');redirect(`/account/orders/${data}`);
+ if(error||typeof data!=='string'||!uuidPattern.test(data))return {error:error?.message||'failed'};
+ revalidatePath('/account/orders');revalidatePath('/seller/orders');return {orderId:data};
 }
 export async function workOrderAction(form:FormData){
  const id=uid(form,'order');if(!id)redirect('/account/orders');const scope=text(form,'scope'),action=text(form,'action');
