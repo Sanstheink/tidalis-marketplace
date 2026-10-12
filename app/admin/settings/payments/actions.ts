@@ -3,10 +3,14 @@ import {redirect} from 'next/navigation';
 import {revalidatePath} from 'next/cache';
 import {requirePlatformAdmin} from '@/lib/auth';
 import {uuidPattern} from '@/lib/marketplace-cart-utils';
-export async function saveIssuer(form:FormData){
- const {client}=await requirePlatformAdmin();if(form.get('confirmed')!=='yes')redirect('/admin/settings/payments?notice=confirm_required');
- const {error}=await client.rpc('save_platform_issuer',{p_name:String(form.get('name')||'').trim(),p_address:String(form.get('address')||'').trim(),p_tax_id:String(form.get('taxId')||'').trim()});
- if(error)redirect('/admin/settings/payments?notice=invalid_issuer');revalidatePath('/admin/settings/payments');revalidatePath('/admin/finance/documents');redirect('/admin/settings/payments?notice=issuer_saved');
+import {issuerInput,validateIssuer,paymentSettingsFailure,type PaymentSettingsState} from '@/lib/payment-settings-validation';
+export async function saveIssuer(_state:PaymentSettingsState,form:FormData):Promise<PaymentSettingsState>{
+ const {client}=await requirePlatformAdmin('/admin/settings/payments');
+ const validation=validateIssuer(form);if(Object.keys(validation.errors).length)return validation;
+ const input=issuerInput(form);
+ const {error}=await client.rpc('save_platform_issuer',{p_name:input.name,p_address:input.address,p_tax_id:input.taxId});
+ if(error){console.error('[Tidalis issuer save]',error.code);return paymentSettingsFailure(error,true);}
+ revalidatePath('/admin/settings/payments');revalidatePath('/admin/finance/documents');redirect('/admin/settings/payments?notice=issuer_saved');
 }
 export async function setSales(form:FormData){
  const {client}=await requirePlatformAdmin();if(form.get('confirmed')!=='yes')redirect('/admin/settings/payments?notice=confirm_required');

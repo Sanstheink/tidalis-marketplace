@@ -10,7 +10,7 @@ const anon=status.ANON_KEY||status.anon_key,service=status.SERVICE_ROLE_KEY||sta
 if(!anon||!service)throw Error('Local CLI status is missing test credentials');
 const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
 const password='Local-Only-Fixture-2026!';
-for(const [number,name] of [[1,'seller'],[2,'other'],[3,'buyer'],[4,'admin'],[5,'unverified'],[6,'applicant']]){
+for(const [number,name] of [[1,'seller'],[2,'other'],[3,'buyer'],[4,'admin'],[5,'unverified'],[6,'applicant'],[7,'selfseller']]){
   const id=`10000000-0000-4000-8000-${String(number).padStart(12,'0')}`;
   const {data,error}=await admin.auth.admin.createUser({id,email:`${name}@tidalis-test.invalid`,password,email_confirm:number!==5,user_metadata:{username:`local_${name}`}});
   if(error||data.user?.id!==id)throw Error(`Could not provision isolated ${name} fixture: ${error?.message||'id mismatch'}`);
@@ -25,7 +25,7 @@ for(const file of files){const {error}=await admin.storage.from('tidalis-product
 sql(`update public.marketplace_settings set fixed_orders_enabled=true,self_service_shops=false,seller_self_publish=false;insert into public.platform_roles(user_id,role) values('10000000-0000-4000-8000-000000000004','admin') on conflict do nothing;`);
 sql(`insert into public.payment_profiles(shop_id,recipient_name,billing_address,bank_accounts,updated_by) values('20000000-0000-4000-8000-000000000001','Local Test Seller','Synthetic local test address 123','{"THB":{"bank":"Local Test Bank","account":"1111111111","enabled":true}}','10000000-0000-4000-8000-000000000001');`);
 const totpSecrets={};
-for(const name of ['seller','admin']){
+for(const name of ['seller','admin','selfseller']){
  const client=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});
  const {error:login}=await client.auth.signInWithPassword({email:`${name}@tidalis-test.invalid`,password});if(login)throw Error('Local MFA sign-in failed');
  const {data:factor,error:enroll}=await client.auth.mfa.enroll({factorType:'totp',friendlyName:`Local ${name} test factor`});if(enroll||!factor)throw Error('Local TOTP enrollment failed');
