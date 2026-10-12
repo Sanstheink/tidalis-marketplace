@@ -19,7 +19,10 @@ export async function checkoutAttempt(userId:string,shopId:string,payload:unknow
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)));
  const fingerprint=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
  if(previous?.fingerprint===fingerprint)return previous;
- const key=crypto.randomUUID(),storageKey=`tidalis:order-attempt:v1:${userId}:${shopId}`;
+ // A recovery SELECT may run before an earlier request commits. Keep its key
+ // even when the user edits the payload: the database lock then returns the
+ // original order or idempotency_conflict instead of inserting a second order.
+ const key=previous?.key??crypto.randomUUID(),storageKey=`tidalis:order-attempt:v1:${userId}:${shopId}`;
  const value=JSON.stringify({fingerprint,key});storage.setItem(storageKey,value);
  if(storage.getItem(storageKey)!==value)throw Error('Checkout retry identity was not retained');
  return {key,fingerprint,storageKey};

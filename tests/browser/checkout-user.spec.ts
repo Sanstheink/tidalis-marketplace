@@ -128,6 +128,9 @@ test('real PostgREST enforces server prices, retry identity and denies buyer mar
   const fake=await client.rpc('create_fixed_order',{...params,p_items:[{...params.p_items[0],expectedPriceMinor:1}]});expect(fake.error!.message).toBe('price_or_terms_changed');
   const retries=await Promise.all([client.rpc('create_fixed_order',params),client.rpc('create_fixed_order',params)]);expect(retries.every(r=>!r.error)).toBe(true);expect(retries[0].data).toBe(retries[1].data);
   const paid=await client.from('orders').update({status:'paid'}).eq('id',retries[0].data);expect(paid.error).not.toBeNull();
+  const racingKey=randomUUID();const edited=await Promise.all(['original request','edited retry'].map(p_note=>client.rpc('create_fixed_order',{...params,p_note,p_idempotency_key:racingKey})));
+  expect(edited.filter(r=>!r.error)).toHaveLength(1);expect(edited.find(r=>r.error)!.error!.message).toBe('idempotency_conflict');
+  const committed=await client.from('orders').select('id').eq('idempotency_key',racingKey);expect(committed.error).toBeNull();expect(committed.data).toHaveLength(1);
 });
 test('a second user cannot open another buyer order through the actual application',async({page})=>{
   const client=await signed();const {data:context}=await client.rpc('get_fixed_checkout',{p_shop_id:shop,p_product_ids:[brush]});

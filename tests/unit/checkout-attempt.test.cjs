@@ -14,7 +14,14 @@ test('fixed checkout identities retain v1 compatibility and isolate buyer and sh
  const storage=memory(),first=await checkoutAttempt(buyer,shop,{},storage);
  assert.equal(first.storageKey,`tidalis:order-attempt:v1:${buyer}:${shop}`);
  assert.equal(storedCheckoutAttempt(buyer+'2',shop,storage),null);assert.equal(storedCheckoutAttempt(buyer,shop+'2',storage),null);
- assert.notEqual((await checkoutAttempt(buyer,shop,{note:'changed'},storage)).key,first.key);
+ assert.equal((await checkoutAttempt(buyer,shop,{note:'changed'},storage)).key,first.key);
+});
+test('an edited retry cannot create another identity while the first request may still be committing',async()=>{
+ const storage=memory(),first=await checkoutAttempt(buyer,shop,{note:'original'},storage);
+ const edited=await checkoutAttempt(buyer,shop,{note:'edited while the response is unknown'},storage);
+ assert.equal(edited.key,first.key);assert.notEqual(edited.fingerprint,first.fingerprint);
+ storage.removeItem(edited.storageKey);
+ assert.notEqual((await checkoutAttempt(buyer,shop,{note:'a new purchase after acknowledgement'},storage)).key,first.key);
 });
 test('storage read/write failures and discarded writes cannot produce a sendable identity',async()=>{
  for(const storage of [
