@@ -2,7 +2,7 @@ import Link from 'next/link';
 import PageNav from './PageNav';
 import {pageWindow} from '@/lib/pagination';
 import {reviewPayment} from '@/app/payments/actions';
-import {formatMoney,paymentMethods,paymentStates,paymentError,type PaymentAttempt} from '@/lib/payment-utils';
+import {formatMoney,paymentMethods,paymentStates,paymentReviewNotice,type PaymentAttempt} from '@/lib/payment-utils';
 import {PendingButton} from './PendingButton';
 import type {SupabaseClient} from '@supabase/supabase-js';
 export default async function PaymentReviewQueue({client,scope,shopId,notice,page}:{client:SupabaseClient;scope:'shop'|'platform';shopId?:string;notice?:string;page?:string}){
@@ -10,7 +10,7 @@ export default async function PaymentReviewQueue({client,scope,shopId,notice,pag
  let query=client.from('payment_attempts').select('*,order:orders(order_kind)',{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false}).range(window.from,window.to);query=scope==='shop'?query.eq('shop_id',shopId!):query.not('invoice_id','is',null);
  const {data,error,count}=await query;if(error)throw Error('Payments unavailable');
  const rows=await Promise.all((data as (PaymentAttempt&{order?:{order_kind:string}|null})[]||[]).map(async a=>{let proof=null;if(a.proof_private_path){const {data}=await client.storage.from('tidalis-payment-proofs').createSignedUrl(a.proof_private_path,60);proof=data?.signedUrl||null;}return {a,proof};}));
- return <><div className="operations-nav"><Link href={scope==='shop'?'/seller/settings/payments':'/admin/settings/payments'}>ตั้งค่ารับเงิน</Link><Link href={scope==='shop'?'/seller/finance':'/admin/finance'}>การเงิน</Link></div>{notice?<p className="form-message" role="status">{notice==='confirmed'?'ยืนยันรับเงินแล้ว':notice==='rejected'?'ส่งคำขอแก้ไขหลักฐานแล้ว':notice==='needs_review'?'รับเงินแล้ว แต่ต้องกระทบยอดก่อนส่งมอบ กรุณาตรวจรายการด้านล่าง':paymentError(notice)}</p>:null}
+ return <><div className="operations-nav"><Link href={scope==='shop'?'/seller/settings/payments':'/admin/settings/payments'}>ตั้งค่ารับเงิน</Link><Link href={scope==='shop'?'/seller/finance':'/admin/finance'}>การเงิน</Link></div>{notice?<p className="form-message" role="status">{paymentReviewNotice(notice)}</p>:null}
  <div className="info-panel">ตรวจชื่อผู้โอน ยอดเงิน สกุลเงิน และรายการเข้าบัญชีจริงก่อนยืนยัน หลักฐานการโอนเพียงอย่างเดียวยังไม่ยืนยันว่าได้รับเงิน</div>
  {!rows.length?<div className="empty-state"><h2>ยังไม่มีรายการรับเงิน</h2><p>รายการที่ผู้จ่ายเริ่มชำระจะแสดงที่นี่</p></div>:<div className="payment-review-list">{rows.map(({a,proof})=><article className="commerce-card" key={a.id}><div className="review-card-heading"><div><span className="eyebrow">{a.order_id?'ORDER':'PLATFORM INVOICE'} / {String(a.order_id||a.invoice_id).slice(0,8)}</span><h2>{formatMoney(a.amount_minor,a.currency)}</h2><p>{paymentMethods[a.method]} · {new Date(a.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'})}</p></div><span className={`status-chip state-${a.status}`}>{paymentStates[a.status]}</span></div>
  <p>ผู้รับ: {a.recipient_snapshot.name} · {a.recipient_snapshot.bank||'พร้อมเพย์ / QR'} {a.recipient_snapshot.account||a.recipient_snapshot.promptpay||''}</p>
