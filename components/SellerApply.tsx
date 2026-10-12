@@ -6,7 +6,7 @@ import {supabaseBrowser} from '@/lib/supabase/browser';
 
 type PublishedPolicy={id:string;version:number;title:string};
 type Existing={id:string;shop_name:string;requested_slug:string;portfolio_url:string;description:string;review_note:string|null};
-export function SellerApply({policy,enabled,existing}:{policy:PublishedPolicy|null;enabled:boolean;existing?:Existing}){
+export function SellerApply({policy,enabled,existing,selfService=false}:{policy:PublishedPolicy|null;enabled:boolean;existing?:Existing;selfService?:boolean}){
   const [name,setName]=useState(existing?.shop_name||'');
   const [slug,setSlug]=useState(existing?.requested_slug||'');
   const [portfolio,setPortfolio]=useState(existing?.portfolio_url||'');
@@ -28,7 +28,7 @@ export function SellerApply({policy,enabled,existing}:{policy:PublishedPolicy|nu
         ?await client.rpc('resubmit_seller_application',{p_application_id:existing.id,...params})
         :await client.rpc('submit_seller_application',params);
       if(rpcError)throw rpcError;
-      router.push('/sell/application?updated=1');router.refresh();
+      router.push(selfService?'/workspace?notice=shop-opened':'/sell/application?updated=1');router.refresh();
     }catch(e){
       setError(e instanceof Error?e.message:'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่');
     }finally{setSubmitting(false);}
@@ -36,7 +36,7 @@ export function SellerApply({policy,enabled,existing}:{policy:PublishedPolicy|nu
   return <form className="seller-apply panel phase4-form" onSubmit={submit}>
     <div className="eyebrow">SELLER ONBOARDING</div>
     <h2>{existing?'แก้ไขใบสมัครร้าน':'สมัครเปิดร้าน Tidalis'}</h2>
-    <p>กรอกข้อมูลให้ครบ ทีมงานจะตรวจสอบ Portfolio และข้อตกลงก่อนอนุมัติ ร้านจะไม่เปิดโดยอัตโนมัติ</p>
+    <p>{selfService?'กรอกข้อมูลร้านและยอมรับข้อตกลง แล้วระบบจะเปิดร้านให้บัญชีของคุณ ตั้งค่า Authenticator ก่อนจัดการสินค้า':'กรอกข้อมูลให้ครบ ทีมงานจะตรวจสอบ Portfolio และข้อตกลงก่อนอนุมัติ'}</p>
     {existing?.review_note&&<div className="phase4-review-note"><strong>ข้อความจากผู้ตรวจสอบ</strong><p>{existing.review_note}</p></div>}
     <label htmlFor="seller-shop-name">ชื่อร้าน</label>
     <input id="seller-shop-name" value={name} onChange={e=>setName(e.target.value)} minLength={3} maxLength={100} required placeholder="ชื่อ Studio หรือแบรนด์" />
@@ -60,7 +60,7 @@ export function SellerApply({policy,enabled,existing}:{policy:PublishedPolicy|nu
     </div>
     {error&&<div className="form-message" role="alert">{error}</div>}
     <button className="btn btn-primary wide" disabled={!enabled||!agree||submitting||!policy}>
-      {submitting?'กำลังส่งใบสมัคร…':existing?'ส่งข้อมูลใหม่ให้ตรวจสอบ':'ส่งคำขอเปิดร้าน'}</button>
+      {submitting?'กำลังส่งใบสมัคร…':selfService?(existing?'บันทึกข้อมูลและเปิดร้าน':'เปิดร้านของฉัน'):existing?'ส่งข้อมูลใหม่ให้ตรวจสอบ':'ส่งคำขอเปิดร้าน'}</button>
     <small>{enabled?'การส่งใบสมัครไม่ได้ทำให้เปิดร้านทันที':'ระบบรับสมัครจริงยังปิดอยู่จนกว่านโยบายและการเปิดรับสมัครจะพร้อม'}</small>
   </form>;
 }

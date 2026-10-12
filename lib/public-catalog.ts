@@ -58,9 +58,13 @@ function normalizeProduct(row: RecordLike): PublicProduct | null {
 // This works with anon RLS from Migration 008; failures do not leak private paths.
 async function withPublicPreviews(products:PublicProduct[],client:NonNullable<ReturnType<typeof publicClient>>):Promise<PublicProduct[]> {
   if(!products.length)return products;
-  const {data,error}=await client.from('product_files').select('product_id,file_path')
-    .in('product_id',products.map(p=>p.id)).eq('is_delivery_file',false)
-    .order('created_at',{ascending:true});
+  const [stockResult,fileResult]=await Promise.all([
+    client.rpc('get_public_product_stock',{p_ids:products.map(p=>p.id)}),
+    client.from('product_files').select('product_id,file_path').in('product_id',products.map(p=>p.id)).eq('is_delivery_file',false).order('created_at',{ascending:true})
+  ]);
+  const {data:availability,error:stockError}=stockResult;
+  products=products.map(p=>{const known=!stockError&&availability&&Object.hasOwn(availability,p.id);const value=known?availability[p.id]:undefined;return {...p,availabilityKnown:Boolean(known&&(value===null||Number.isSafeInteger(value)&&value>=0)),stock:known&&(value===null||Number.isSafeInteger(value)&&value>=0)?value:p.stock};});
+  const {data,error}=fileResult;
   if(error){console.error('[Tidalis public previews] metadata unavailable',error.code);return products}
   const first=new Map<string,string>();
   for(const row of data||[]){

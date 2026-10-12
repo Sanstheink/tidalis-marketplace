@@ -2,6 +2,7 @@
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {requireSeller,requireMfa} from '@/lib/auth';
+import {sellerAccessMode} from '@/lib/seller-access';
 
 export async function submitShopReadiness(form:FormData){
   const {client,member}=await requireSeller();
@@ -9,11 +10,13 @@ export async function submitShopReadiness(form:FormData){
   if(!['owner','manager'].includes(member.role)) redirect('/seller/readiness?notice=forbidden');
   if(form.get('confirm')!=='on')redirect('/seller/readiness?notice=failed');
   const note=String(form.get('note')||'').trim().slice(0,1501);
-  const {error}=await client.rpc('submit_shop_readiness',{p_shop_id:member.shop_id,p_seller_note:note});
+  const mode=await sellerAccessMode(client);
+  if(!mode.available)redirect('/seller/readiness?notice=failed');
+  const {error}=mode.selfService?await client.rpc('activate_own_shop',{p_shop:member.shop_id}):await client.rpc('submit_shop_readiness',{p_shop_id:member.shop_id,p_seller_note:note});
   if(error){console.error('[Tidalis readiness submit]',error.code);redirect('/seller/readiness?notice=failed')}
   revalidatePath('/seller/readiness');
   revalidatePath('/admin/shop-readiness');
-  redirect('/seller/readiness?notice=submitted');
+  redirect('/seller/readiness?notice='+(mode.selfService?'activated':'submitted'));
 }
 
 export async function pauseOwnShopVisibility(form:FormData){

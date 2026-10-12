@@ -2,6 +2,7 @@
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {requireSeller,requireMfa} from '@/lib/auth';
+import {sellerAccessMode} from '@/lib/seller-access';
 
 const types=['refund','delivery','license','other'];
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -31,8 +32,11 @@ export async function submitShopPolicy(formData:FormData){
   if(!['owner','manager'].includes(member.role))redirect('/seller/policies?result=role-denied');
   const id=formData.get('id');
   if(typeof id!=='string'||!uuid.test(id))redirect('/seller/policies?result=invalid');
-  const {error}=await client.rpc('submit_shop_policy_draft',{p_policy_version_id:id});
+  const mode=await sellerAccessMode(client);
+  if(!mode.available)redirect('/seller/policies?result=submit-failed');
+  if(mode.selfService&&formData.get('confirmed')!=='yes')redirect('/seller/policies?result=confirmation-required');
+  const {error}=mode.selfService?await client.rpc('publish_own_shop_policy',{p_policy:id,p_confirmed:true}):await client.rpc('submit_shop_policy_draft',{p_policy_version_id:id});
   if(error){console.error('Submit shop policy failed',error.code);redirect('/seller/policies?result=submit-failed');}
   revalidatePath('/seller/policies');revalidatePath('/admin/shop-policies');
-  redirect('/seller/policies?result=submitted');
+  redirect('/seller/policies?result='+(mode.selfService?'published':'submitted'));
 }

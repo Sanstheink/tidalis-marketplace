@@ -23,6 +23,8 @@ try{
   for(const file of readdirSync('supabase/migrations').filter(file=>file.endsWith('.sql')).sort()){
     await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));console.log('MIGRATION PASS',file);
   }
+  // Legacy cases exercise deliberately closed intake and manual review.
+  await db.exec('update public.marketplace_settings set seller_intake_open=false,fixed_orders_enabled=false,self_service_shops=false,seller_self_publish=false');
   if(process.env.TIDALIS_SCHEMA_SNAPSHOT)writeFileSync(process.env.TIDALIS_SCHEMA_SNAPSHOT,JSON.stringify(await rows("select table_name as table,column_name as column,udt_name as type,is_nullable as nullable from information_schema.columns where table_schema='public' order by table_name,ordinal_position"),null,2));
   await db.exec(`
     insert into auth.users(id,email,email_confirmed_at) values

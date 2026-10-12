@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {requireSeller} from '@/lib/auth';
+import {sellerAccessMode} from '@/lib/seller-access';
 import {submitShopReadiness,pauseOwnShopVisibility} from './actions';
 export const dynamic='force-dynamic';
 const labels:Record<string,string>={
@@ -14,9 +15,9 @@ const labels:Record<string,string>={
   shop_policy_refund:'นโยบายคืนเงินร้านยังไม่เผยแพร่',
   shop_policy_delivery:'นโยบายส่งมอบร้านยังไม่เผยแพร่',
   shop_policy_license:'นโยบาย License ร้านยังไม่เผยแพร่',
-  published_product_incomplete:'สินค้าที่เผยแพร่บางรายการไม่สมบูรณ์ ต้องให้ Admin ตรวจหรือเก็บสินค้าก่อนเปิดร้านอีกครั้ง'
+  published_product_incomplete:'สินค้าที่เผยแพร่บางรายการไม่สมบูรณ์ ให้เก็บรายการนั้นและสร้างฉบับใหม่ให้ครบก่อนเปิดร้านอีกครั้ง'
 };
-const outcomes:Record<string,string>={submitted:'ส่งคำขอให้ Admin ตรวจแล้ว',failed:'ไม่สามารถส่งคำขอ กรุณาตรวจข้อมูลและสิทธิ์ MFA',forbidden:'เฉพาะ Owner/Manager ที่ผ่าน MFA เท่านั้น',paused:'พักหน้าร้านสาธารณะแล้ว ต้องได้รับอนุมัติอีกครั้งก่อนเปิด'};
+const outcomes:Record<string,string>={activated:'เปิดร้านพร้อมรับคำสั่งซื้อแล้ว',submitted:'ส่งคำขอให้ Admin ตรวจแล้ว',failed:'ไม่สามารถส่งคำขอ กรุณาตรวจข้อมูลและสิทธิ์ MFA',forbidden:'เฉพาะ Owner/Manager ที่ผ่าน MFA เท่านั้น',paused:'พักหน้าร้านสาธารณะแล้ว เปิดใหม่ได้เมื่อข้อมูลพร้อม'};
 export default async function SellerReadiness({searchParams}:{searchParams:Promise<{notice?:string}>}){
   const [{client,member},params]=await Promise.all([requireSeller(),searchParams]);
   if(!['owner','manager','artist'].includes(member.role))return <div className="container page-pad">
@@ -31,9 +32,10 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
   const {data:assurance}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
   const elevated=assurance?.currentLevel==='aal2';
   const blockers=Array.isArray(readiness)?readiness as string[]:[];
-  const canSubmit=['owner','manager'].includes(member.role)&&shop?.status==='paused'&&elevated&&blockers.length===0&&['needs_information','rejected',undefined,null].includes(request?.status);
+  const mode=await sellerAccessMode(client);
+  const canSubmit=['owner','manager'].includes(member.role)&&mode.available&&elevated&&blockers.length===0&&(mode.selfService?['active','paused'].includes(shop?.status||''):shop?.status==='paused'&&['needs_information','rejected',undefined,null].includes(request?.status));
   return <div className="container page-pad phase5-page">
-    <div className="page-heading"><div className="eyebrow">SELLER / SHOP READINESS</div><h1>เตรียม<em>เปิดร้าน.</em></h1><p>เปิดหน้าร้านหลังแอดมินตรวจสอบ ตั้งค่าบัญชีรับเงินและสินค้าให้พร้อมก่อนรับคำสั่งซื้อ</p></div>
+    <div className="page-heading"><div className="eyebrow">SELLER / SHOP READINESS</div><h1>เตรียม<em>เปิดร้าน.</em></h1><p>เปิดร้านและเผยแพร่สินค้าได้เอง ตั้งค่านโยบายและบัญชีรับเงินให้ครบก่อนรับคำสั่งซื้อ</p></div>
     <p><Link href="/seller" className="text-link">← ภาพรวมร้าน</Link> · <Link href="/seller/policies" className="text-link">นโยบายร้าน</Link> · <Link href="/seller/products" className="text-link">สินค้า</Link></p>
     {params.notice&&outcomes[params.notice]&&<div className="phase4-alert" role="status">{outcomes[params.notice]}</div>}
     {(shopError||requestError||readinessError)&&<div className="phase4-alert" role="alert">โหลดข้อมูลความพร้อมร้านไม่สำเร็จ กรุณาลองอีกครั้งหรือติดต่อผู้ดูแล ({readinessError?.code||shopError?.code||requestError?.code||'unknown'})</div>}
@@ -41,11 +43,11 @@ export default async function SellerReadiness({searchParams}:{searchParams:Promi
       {request?.review_note&&<div className="phase5-note">ข้อความจาก Admin: {request.review_note}</div>}
       {shop?.status==='active'?<p role="status">ร้านเปิดให้เข้าชมแล้ว! <Link href={`/shops/${shop.slug}`} className="text-link">ดูหน้าร้านสาธารณะ →</Link></p>:null}
       <h3>เช็กลิสต์ความพร้อม</h3>
-      {readinessError?<p>ยังประเมินความพร้อมไม่ได้</p>:blockers.length?<ul>{blockers.map(item=><li key={item}>○ {labels[item]||item}</li>)}</ul>:<p>✓ ผ่านข้อกำหนดด้านนโยบาย การอนุมัติร้าน และสินค้าเบื้องต้น</p>}
+      {readinessError?<p>ยังประเมินความพร้อมไม่ได้</p>:blockers.length?<ul>{blockers.map(item=><li key={item}>○ {labels[item]||item}</li>)}</ul>:<p>✓ ข้อมูลร้าน นโยบาย และสินค้าเบื้องต้นครบแล้ว</p>}
       {!elevated&&<p><Link className="text-link" href="/mfa?next=%2Fseller%2Freadiness">ยืนยัน Authenticator ก่อนส่งคำขอเปิดร้านหรือพักร้าน →</Link></p>}
-      {canSubmit&&!shopError&&!requestError&&!readinessError&&<form action={submitShopReadiness} className="phase4-action-form"><label>หมายเหตุถึง Admin (ไม่เกิน 1,500 ตัวอักษร)<textarea name="note" rows={3} maxLength={1500} placeholder="รายละเอียดความพร้อมร้านของคุณ"/></label><label className="checkbox-label"><input type="checkbox" required name="confirm"/> ยืนยันว่ารายละเอียดร้านและนโยบายผ่านการตรวจสอบแล้ว</label><button type="submit" className="btn btn-primary">ส่งคำขอเปิดร้านให้ Admin ตรวจ</button></form>}
-      {elevated&&shop?.status==='active'&&['owner','manager'].includes(member.role)&&<form action={pauseOwnShopVisibility} className="phase4-action-form"><h3>พักหน้าร้านชั่วคราว</h3><p>ร้านและสินค้าที่เผยแพร่จะหายจากหน้าสาธารณะ แต่ลิงก์ภาพ Preview ที่ออกไปก่อนหน้าอาจใช้ได้จนหมดอายุ 5 นาที</p><label>เหตุผลการพักร้าน (อย่างน้อย 12 ตัวอักษร)<textarea name="reason" rows={3} required minLength={12} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" value="yes" name="confirm" required/>ยืนยันพักหน้าร้าน และยอมรับว่าการเปิดอีกครั้งต้องผ่าน Admin</label><button type="submit" className="btn btn-outline">พักหน้าร้านสาธารณะ</button></form>}
-      {request?.status==='submitted'&&<p>คำขออยู่ระหว่างตรวจ กรุณารอ Admin ยืนยัน</p>}
+      {canSubmit&&!shopError&&!requestError&&!readinessError&&<form action={submitShopReadiness} className="phase4-action-form"><label>{mode.selfService?'บันทึกการเตรียมร้าน':'หมายเหตุถึง Admin'} (ไม่เกิน 1,500 ตัวอักษร)<textarea name="note" rows={3} maxLength={1500} placeholder="รายละเอียดความพร้อมร้านของคุณ"/></label><label className="checkbox-label"><input type="checkbox" required name="confirm"/> ฉันตรวจรายละเอียดร้าน นโยบาย และสินค้าให้ครบแล้ว</label><button type="submit" className="btn btn-primary">{mode.selfService?'เปิดร้าน / ตรวจความพร้อมอีกครั้ง':'ส่งคำขอเปิดร้านให้ Admin ตรวจ'}</button></form>}
+      {elevated&&shop?.status==='active'&&['owner','manager'].includes(member.role)&&<form action={pauseOwnShopVisibility} className="phase4-action-form"><h3>พักหน้าร้านชั่วคราว</h3><p>ร้านและสินค้าที่เผยแพร่จะหายจากหน้าสาธารณะ แต่ลิงก์ภาพ Preview ที่ออกไปก่อนหน้าอาจใช้ได้จนหมดอายุ 5 นาที</p><label>เหตุผลการพักร้าน (อย่างน้อย 12 ตัวอักษร)<textarea name="reason" rows={3} required minLength={12} maxLength={1500}/></label><label className="checkbox-label"><input type="checkbox" value="yes" name="confirm" required/>ยืนยันพักหน้าร้าน และยอมรับว่าการเปิดอีกครั้งต้องตรวจข้อมูลให้ครบ</label><button type="submit" className="btn btn-outline">พักหน้าร้านสาธารณะ</button></form>}
+      {request?.status==='submitted'&&<p>{mode.selfService?'คำขอเดิมยังรอตรวจ คุณเตรียมข้อมูลให้ครบแล้วเปิดร้านเองได้':'คำขออยู่ระหว่างตรวจ กรุณารอ Admin ยืนยัน'}</p>}
     </div>
   </div>;
 }

@@ -1,7 +1,7 @@
 'use server';
 import {cookies} from 'next/headers';
 import {redirect} from 'next/navigation';
-import {requireUser} from '@/lib/auth';
+import {requireUser,requireMfa} from '@/lib/auth';
 import {isShopId,SELLER_SHOP_COOKIE} from '@/lib/seller-workspace';
 
 export async function selectSellerShop(formData: FormData) {
@@ -15,10 +15,14 @@ export async function selectSellerShop(formData: FormData) {
   if(memberError||!member)redirect('/workspace?notice=shop-unavailable');
   if(factorError)redirect('/workspace?notice=mfa-unavailable');
   if(!factors?.totp?.some(factor=>factor.status==='verified'))redirect('/mfa?next=%2Fworkspace');
-  const {data:shop,error:shopError}=await client.from('shops').select('id').eq('id',shopId).in('status',['active','paused']).maybeSingle();
+  const history=formData.get('history')==='yes';
+  if(history)await requireMfa(client,'/workspace');
+  let shopQuery=client.from('shops').select('id,status').eq('id',shopId);
+  if(!history)shopQuery=shopQuery.in('status',['active','paused']);
+  const {data:shop,error:shopError}=await shopQuery.maybeSingle();
   if(shopError||!shop)redirect('/workspace?notice=shop-unavailable');
   (await cookies()).set(SELLER_SHOP_COOKIE,shopId,{
     httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:60*60*24*30
   });
-  redirect('/seller');
+  redirect(history?'/seller/orders':'/seller');
 }

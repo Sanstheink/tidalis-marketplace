@@ -21,7 +21,7 @@ export function PublicShopGrid({products,total,pageSize,filters,basePath='/shop'
         <div className="search-wrap"><Search size={17}/><input name="q" aria-label="ค้นหางานศิลปะ"
           defaultValue={filters.q} maxLength={80} placeholder="ค้นหาประเภทงาน สินค้า หรือชื่อร้าน..."/></div>
         <label className="sort-wrap"><SlidersHorizontal size={16}/><select name="sort" aria-label="เรียงสินค้า" defaultValue={filters.sort}>
-          <option value="featured">ล่าสุด</option><option value="low">ราคาต่ำ → สูง</option><option value="high">ราคาสูง → ต่ำ</option>
+          <option value="featured">ล่าสุด</option><option value="low">ราคาต่ำ → สูง (แยกสกุลเงิน)</option><option value="high">ราคาสูง → ต่ำ (แยกสกุลเงิน)</option>
         </select></label>
         <button className="btn btn-outline" type="submit">ค้นหา</button>
       </form>

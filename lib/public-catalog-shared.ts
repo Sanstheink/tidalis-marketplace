@@ -4,7 +4,7 @@ export type PublicProduct = {
   id: string; slug: string; name: string; description: string;
   productType: PublicProductType; pricingMode: 'quote' | 'fixed';
   shopId: string; shopSlug: string; shopName: string;
-  workType: string; exclusive: boolean; stock: number | null;
+  workType: string; exclusive: boolean; stock: number | null; availabilityKnown?:boolean;
   currency?: string; licenses: PublicLicense[]; previewUrl?: string | null;
 };
 export type PublicShop = { id: string; slug: string; name: string; description: string };

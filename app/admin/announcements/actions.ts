@@ -8,7 +8,7 @@ function bangkokDatetime(value: FormDataEntryValue | null):string|null {
   if(typeof value!=='string'||!value.trim())return null;
   if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))throw Error('invalid date');
   const parsed=new Date(value+':00+07:00');
-  if(!Number.isFinite(parsed.getTime()))throw Error('invalid date');
+  if(!Number.isFinite(parsed.getTime())||new Date(parsed.getTime()+7*60*60*1000).toISOString().slice(0,16)!==value)throw Error('invalid date');
   return parsed.toISOString();
 }
 
