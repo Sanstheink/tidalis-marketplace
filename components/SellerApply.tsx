@@ -61,6 +61,6 @@ export function SellerApply({policy,enabled,existing,selfService=false}:{policy:
     {error&&<div className="form-message" role="alert">{error}</div>}
     <button className="btn btn-primary wide" disabled={!enabled||!agree||submitting||!policy}>
       {submitting?'กำลังส่งใบสมัคร…':selfService?(existing?'บันทึกข้อมูลและเปิดร้าน':'เปิดร้านของฉัน'):existing?'ส่งข้อมูลใหม่ให้ตรวจสอบ':'ส่งคำขอเปิดร้าน'}</button>
-    <small>{enabled?'การส่งใบสมัครไม่ได้ทำให้เปิดร้านทันที':'ระบบรับสมัครจริงยังปิดอยู่จนกว่านโยบายและการเปิดรับสมัครจะพร้อม'}</small>
+    <small>{enabled?(selfService?'ระบบเปิดร้านเมื่อข้อมูลและข้อตกลงครบ ตั้งค่า Authenticator ก่อนจัดการสินค้า':'การส่งใบสมัครไม่ได้ทำให้เปิดร้านทันที'):'ระบบรับสมัครจริงยังปิดอยู่จนกว่านโยบายและการเปิดรับสมัครจะพร้อม'}</small>
   </form>;
 }
