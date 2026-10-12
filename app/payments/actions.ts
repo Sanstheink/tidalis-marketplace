@@ -2,7 +2,7 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {redirect} from 'next/navigation';
 import {revalidatePath} from 'next/cache';
-import {requireUser,requireMfa,requireSeller,requirePlatformAdmin} from '@/lib/auth';
+import {requireUser,requireMfa,requireSellerFinance,requirePlatformAdmin} from '@/lib/auth';
 import {supabaseService} from '@/lib/supabase/service';
 import {uuidPattern} from '@/lib/marketplace-cart-utils';
 
@@ -29,7 +29,7 @@ export async function uploadPaymentProof(form:FormData){
  const back=`/payments/${attemptId}`;const {client,user}=await requireUser(back);const service=supabaseService();
  if(!service)failure(back,'payment_configuration_required');
  const {data:attempt}=await client.from('payment_attempts').select('*').eq('id',attemptId).eq('payer_id',user.id).maybeSingle();
- if(!attempt||attempt.status!=='pending'||!['bank_transfer','promptpay','qr_code'].includes(attempt.method)||Date.parse(attempt.expires_at)<=Date.now())failure(back,'proof_unavailable');
+ if(!attempt||!['pending','expired'].includes(attempt.status)||!['bank_transfer','promptpay','qr_code'].includes(attempt.method))failure(back,'proof_unavailable');
  if(attempt.invoice_id)await requireMfa(client,back);
  const file=form.get('proof');if(!(file instanceof File)||file.size<8||file.size>3145728)failure(back,'invalid_proof');
  const bytes=Buffer.from(await file.arrayBuffer()),type=proofType(bytes);if(!type)failure(back,'invalid_proof');
@@ -49,9 +49,9 @@ export async function cancelPayment(form:FormData){
 }
 export async function reviewPayment(form:FormData){
  const attemptId=id(form,'attemptId');const admin=form.get('scope')==='platform';let client;
- if(admin){({client}=await requirePlatformAdmin());}else{const seller=await requireSeller();await requireMfa(seller.client,'/seller/payments');client=seller.client;}
+ if(admin){({client}=await requirePlatformAdmin());}else{const seller=await requireSellerFinance();await requireMfa(seller.client,'/seller/payments');client=seller.client;}
  const back=admin?'/admin/finance/payments':'/seller/payments',approve=form.get('decision')==='approve',note=String(form.get('note')||'').trim();
  if(!attemptId||(approve&&form.get('bankConfirmed')!=='yes')||(!approve&&(note.length<10||note.length>1000)))failure(back,'review_confirmation_required');
- const {error}=await client.rpc('review_manual_payment',{p_attempt_id:attemptId,p_approve:approve,p_note:note});if(error)failure(back,error.message);
- revalidatePath(back);revalidatePath('/account/library');revalidatePath('/admin/finance/documents');redirect(`${back}?notice=${approve?'confirmed':'rejected'}`);
+ const {data:result,error}=await client.rpc('review_manual_payment',{p_attempt_id:attemptId,p_approve:approve,p_note:note});if(error)failure(back,error.message);
+ revalidatePath(back);revalidatePath('/account/library');revalidatePath('/admin/finance/documents');redirect(`${back}?notice=${approve?(result==='needs_review'?'needs_review':'confirmed'):'rejected'}`);
 }

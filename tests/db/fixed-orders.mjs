@@ -19,6 +19,8 @@ const denied=async(fn,message)=>assert.rejects(fn,error=>message.test(error.mess
 try{
  await db.exec(readFileSync('tests/db/supabase-model.sql','utf8'));
  for(const file of readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort())await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
+ // The closed-gate regression is explicit; the self-service release defaults differ.
+ await db.exec('update public.marketplace_settings set seller_intake_open=false,fixed_orders_enabled=false,self_service_shops=false,seller_self_publish=false');
  await db.exec(`insert into auth.users(id,email,email_confirmed_at) select ('10000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'test-'||i||'@example.invalid',case when i=5 then null else now() end from generate_series(1,5) i;`);
  await db.exec(readFileSync('tests/db/fixed-order-fixtures.sql','utf8'));
  await db.exec("insert into storage.objects(bucket_id,name,metadata) select 'tidalis-product-files',file_path,jsonb_build_object('mimetype',case when is_delivery_file then 'application/zip' else 'image/png' end,'size',100) from public.product_files");

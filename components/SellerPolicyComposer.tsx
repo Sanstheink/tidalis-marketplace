@@ -45,7 +45,8 @@ export function SellerPolicyComposer({shopId,existing,initialType='refund',fixed
         if(uploadError){setMessage(`อัปโหลดไม่สำเร็จ (${uploadError.statusCode||'Storage'}): ${uploadError.message} — ตรวจ Migration 007 และสิทธิ์ MFA`);return;}
         const {error:saveError}=await client.rpc('save_shop_policy_document_draft',{p_shop_id:shopId,p_policy_type:policyType,p_file_path:path,p_document_name:file.name,p_document_size:file.size,p_draft_id:draft?.id||null});
         if(saveError){
-          setMessage(`อัปโหลดแล้วแต่ยังผูกกับ Draft ไม่สำเร็จ (${saveError.code||'RPC'}): ${saveError.message} โปรดแจ้งผู้ดูแลให้ตรวจไฟล์ที่ค้างใน Private Storage`);
+          await client.storage.from(BUCKET).remove([path]);
+          setMessage('เพิ่มเอกสารไม่สำเร็จ กรุณาตรวจสถานะฉบับร่างและลองใหม่');
           return;
         }
       }

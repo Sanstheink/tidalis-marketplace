@@ -1,14 +1,12 @@
-# Marketplace Tidalis — 0.6.1
+# Marketplace Tidalis — 0.6.4
 
-Current feature release: **0.6.1 — fixed-price order reservations and commerce UI**. See [PHASE6_1_FIXED_ORDERS.md](PHASE6_1_FIXED_ORDERS.md). Real order creation stays disabled by default; payments and downloads remain gated for the next phase. Historical demo cart/checkout moved under `/preview`.
+Phase 6 connects fixed-price orders, direct shop/platform payments, verified proof review, private downloads, individual seller operations, ordinary receipts, Commission briefs/quotes/order delivery, manual refunds, reconciliation, and fee credits. See [PHASE6_COMPLETION.md](PHASE6_COMPLETION.md) and [OPERATIONS.md](OPERATIONS.md).
 
-Next.js marketplace with Supabase Auth, seller workspaces, moderated catalogue/policies, and admin operations. This branch adds fixed-price order reservations and a refreshed commerce UI on top of Phase 5.9 and 0.5.10. Public storefronts show published products from active shops; hosted order creation stays gated and payment/delivery remain disabled.
-
-See [RELEASE_0_5_10.md](RELEASE_0_5_10.md) for changes, actual test results, applied Supabase migrations, remaining test limits, and the Production rollout.
+Shops open and publish products/policies through owner-scoped self-service RPCs. Configure actual recipients, issuer identity, fee rules and published policies. Public storefronts show published products from active shops. Platform documents support real zero balances without inventing payments. Historical demo checkout is isolated under `/preview`.
 
 ## Local setup
 
-Use Node 24 (tested) or Node 22. Dependencies are pinned with a committed lockfile.
+Use Node 24 or Node 22. Dependencies are pinned with a committed lockfile.
 
 ```bash
 npm ci
@@ -28,7 +26,7 @@ For a **new** database, review and apply `supabase/migrations/*.sql` in order. L
 
 For the existing Marketplace project `fdwiwaawqrenxxvdsnqs`, historical phases 001–010 already exist and were applied manually. Both timestamped 0.5.10 migrations have also been applied and verified. Do not replay historical SQL or run `db push --include-all` against that project without reconciling its migration history.
 
-Seller intake is controlled by `marketplace_settings`, starts closed, and is changed by an MFA Admin at `/admin/seller-applications`. An effective, approved Seller Agreement is still required. The former legal environment flag is no longer used by the app.
+The new self-service migration enables seller/order intake and self-publication when the owner applies it. Admin intake controls remain available. A real effective, approved Seller Agreement is still required. Both new migration files and historical hosted timestamp mappings are listed in OPERATIONS.md. The former legal environment flag is no longer used by the app.
 
 ## Tests
 
@@ -40,7 +38,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-`npm test` runs all historical checks, mocked read contracts, 15 unit cases and 59 isolated database regressions. CI builds core browser checks with placeholder configuration, then tests signed buyers against a fresh local Supabase Auth/Postgres/Storage stack. It never modifies the hosted project. The opt-in live browser suite is separate:
+`npm test` invokes historical source/unit/database checks. Legacy fixtures explicitly select manual-review mode; they do not establish acceptance coverage for the self-service release. No functional tests or build were executed during this iteration, as requested by the owner. CI builds core browser checks with placeholder configuration, then tests signed buyers against a fresh local Supabase Auth/Postgres/Storage stack. It never modifies the hosted project. The opt-in live browser suite is separate:
 
 ```bash
 TIDALIS_LIVE_TESTS=true npm run test:browser
@@ -52,6 +50,6 @@ Optional test-container settings: `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` selects 
 
 ## Deployment
 
-Push a feature branch for review/Preview, then merge the verified changes into Vercel's configured Production Branch. Confirm the deployed source commit contains 0.6.1 and its additive migration has been applied, with the live order gate still closed. Redeploy is appropriate for rebuilding that commit after configuration changes. Full instructions are in the release guide; Vercel deployment is left to the project owner.
+Push a feature branch for review/Preview, then merge the verified changes into Vercel's configured Production Branch. Confirm the deployed source commit contains 0.6.4 and all source migrations recorded in OPERATIONS.md have been applied, and verify the intake settings produced by the self-service migration. Redeploy is appropriate for rebuilding that commit after configuration changes. Full instructions are in the release guide; Vercel deployment is left to the project owner.
 
 Phase-specific guides remain for historical context. Their old environment flags and rollout instructions are superseded by the release guide.

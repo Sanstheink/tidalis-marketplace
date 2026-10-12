@@ -39,7 +39,7 @@ export function checkoutStockValid(rows:ReturnType<typeof checkoutRows>){
     return count<=Math.min(20,row.product.available)&&(row.product.exclusive?count===1:true);
   });
 }
-export const orderLabels:Record<string,string>={pending:'จองสินค้าแล้ว',expired:'หมดเวลาจอง',cancelled:'ยกเลิกแล้ว',awaiting_quote:'รอใบเสนอราคา',awaiting_acceptance:'รอตอบรับ',awaiting_payment:'รอชำระเงิน',payment_review:'กำลังตรวจสอบ',paid:'ชำระแล้ว',fulfilling:'กำลังส่งมอบ',fulfilled:'ส่งมอบแล้ว'};
+export const orderLabels:Record<string,string>={pending:'จองสินค้าแล้ว',expired:'หมดเวลาจอง',cancelled:'ยกเลิกแล้ว',awaiting_quote:'รอใบเสนอราคา',awaiting_acceptance:'รอตอบรับ',awaiting_payment:'รอชำระเงิน',payment_review:'กำลังตรวจสอบ',paid:'ชำระแล้ว',fulfilling:'กำลังส่งมอบ',fulfilled:'ส่งมอบแล้ว',delivery_review:'รอตรวจรับงาน',refund_pending:'รอดำเนินการคืนเงิน',partially_refunded:'คืนเงินบางส่วนแล้ว',refunded:'คืนเงินเต็มยอดแล้ว'};
 export const checkoutError=(code:string)=>({
   mixed_currencies:'หนึ่งคำสั่งซื้อใช้สกุลเงินเดียว กรุณาแยกสินค้าคนละสกุลเงินออกก่อน',orders_closed:'ระบบยังไม่เปิดรับคำสั่งซื้อ กรุณากลับมาอีกครั้ง',shop_unavailable:'ร้านนี้ไม่พร้อมรับคำสั่งซื้อแล้ว',
   payment_setup_pending:'ร้านยังไม่มีช่องทางรับเงินสำหรับสกุลเงินนี้ กรุณากลับมาเมื่อร้านตั้งค่าพร้อม',shop_setup_pending:'ร้านนี้กำลังตั้งค่าระบบสั่งซื้อ กรุณากลับมาอีกครั้ง',stock_unavailable:'สินค้าบางรายการถูกจองแล้ว กรุณาตรวจสอบจำนวนอีกครั้ง',

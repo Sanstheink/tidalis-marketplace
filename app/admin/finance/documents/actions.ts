@@ -33,3 +33,13 @@ export async function voidPlatformDocument(form:FormData){
  if(error){console.error('[platform billing void]',error.code);redirect('/admin/finance/documents?notice=failed');}
  revalidatePath('/admin/finance/documents');redirect('/admin/finance/documents?notice=voided');
 }
+
+export async function issueZeroPlatformDocument(form:FormData){
+ const {client}=await requirePlatformAdmin('/admin/finance/documents');
+ const shop=String(form.get('shopId')||''),kind=String(form.get('kind')||'receipt'),currency=String(form.get('currency')||'THB');
+ const from=String(form.get('from')||''),to=String(form.get('to')||'');
+ if(!uuid.test(shop)||!['receipt','tax_invoice'].includes(kind)||!['THB','LAK','USD'].includes(currency)||!/^\d{4}-\d{2}-\d{2}$/.test(from)||!/^\d{4}-\d{2}-\d{2}$/.test(to)||form.get('confirmed')!=='yes')redirect('/admin/finance/documents?notice=invalid');
+ const {data,error}=await client.rpc('issue_zero_platform_document',{p_shop_id:shop,p_currency:currency,p_from:from,p_to:to,p_kind:kind,p_name:String(form.get('recipientName')||'').trim(),p_address:String(form.get('recipientAddress')||'').trim(),p_tax_id:kind==='tax_invoice'?String(form.get('recipientTaxId')||'').trim():null});
+ if(error)redirect('/admin/finance/documents?notice='+encodeURIComponent(['zero_balance_required','invalid_period','issuer_required','billing_identity_required','vat_issuance_disabled','verified_tax_identity_required','tax_zero_context_required'].includes(error.message)?error.message:'failed'));
+ revalidatePath('/admin/finance/documents');revalidatePath('/admin/finance');revalidatePath('/seller/finance');redirect(`/admin/finance/documents/${data}`);
+}

@@ -77,7 +77,7 @@ export function AuthForm({mode,next='/account',initialError}:{mode:'login'|'regi
       {mode==='login'&&<p className="auth-switch"><Link href="/forgot-password">ลืมรหัสผ่าน?</Link></p>}
       <p className="auth-switch">{mode==='login'?'ยังไม่มีบัญชี?':'มีบัญชีแล้ว?'} <Link href={mode==='login'?'/register':'/login'}>{mode==='login'?'สมัครสมาชิก':'เข้าสู่ระบบ'}</Link></p>
       <div className="auth-security"><LockKeyhole size={15}/> Secured by Supabase Authentication</div>
-      <p className="auth-privacy">โปรดอ่าน <Link href="/policies/terms">ข้อกำหนดการใช้บริการ</Link> และ <Link href="/policies/privacy">นโยบายความเป็นส่วนตัว</Link> (ฉบับร่างระหว่างพัฒนา)</p>
+      <p className="auth-privacy">โปรดอ่าน <Link href="/policies/terms">ข้อกำหนดการใช้บริการ</Link> และ <Link href="/policies/privacy">นโยบายความเป็นส่วนตัว</Link></p>
     </div>
   </div>;
 }

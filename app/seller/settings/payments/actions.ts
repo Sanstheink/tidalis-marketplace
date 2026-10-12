@@ -2,19 +2,22 @@
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
 import {randomUUID} from 'node:crypto';
-import {requireSeller,requireMfa,requirePlatformAdmin} from '@/lib/auth';
+import {requireSellerFinance,requireMfa,requirePlatformAdmin} from '@/lib/auth';
+import {recipientInput,validateRecipient,paymentSettingsFailure,type PaymentSettingsState} from '@/lib/payment-settings-validation';
 
-export async function saveRecipient(form:FormData){
+export async function saveRecipient(_state:PaymentSettingsState,form:FormData):Promise<PaymentSettingsState>{
  const platform=form.get('scope')==='platform';let client,shopId:string|null=null;
- if(platform){({client}=await requirePlatformAdmin('/admin/settings/payments'));}else{const seller=await requireSeller();client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,'/seller/settings/payments');}
+ if(platform){({client}=await requirePlatformAdmin('/admin/settings/payments'));}else{const seller=await requireSellerFinance('/seller/settings/payments');client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,'/seller/settings/payments');}
  const back=platform?'/admin/settings/payments':'/seller/settings/payments';
- if(form.get('confirmed')!=='yes')redirect(`${back}?notice=confirm_required`);
- const {error}=await client.rpc('save_payment_profile',{p_shop_id:shopId,p_name:String(form.get('name')||'').trim(),p_bank:String(form.get('bank')||'').trim(),p_account:String(form.get('account')||'').replace(/\s/g,''),p_promptpay:String(form.get('promptpay')||'').replace(/[-\s]/g,''),p_bank_enabled:form.get('bankEnabled')==='on',p_promptpay_enabled:form.get('promptpayEnabled')==='on',p_address:String(form.get('address')||'').trim(),p_currency:String(form.get('currency')||'THB')});
- if(error)redirect(`${back}?notice=${encodeURIComponent(error.message)}`);revalidatePath(back);revalidatePath('/seller/readiness');redirect(`${back}?notice=saved`);
+ const validation=validateRecipient(form);if(Object.keys(validation.errors).length)return validation;
+ const input=recipientInput(form);
+ const {error}=await client.rpc('save_payment_profile',{p_shop_id:shopId,p_name:input.name,p_bank:input.bank,p_account:input.account,p_promptpay:input.promptpay,p_bank_enabled:input.bankEnabled,p_promptpay_enabled:input.promptpayEnabled,p_address:input.address,p_currency:input.currency});
+ if(error){console.error('[Tidalis recipient save]',error.code);return paymentSettingsFailure(error);}
+ revalidatePath(back);revalidatePath('/seller/readiness');redirect(`${back}?notice=saved`);
 }
 export async function saveRecipientQR(form:FormData){
  const platform=form.get('scope')==='platform';let client,shopId:string|null=null;
- if(platform){({client}=await requirePlatformAdmin('/admin/settings/payments'));}else{const seller=await requireSeller();client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,'/seller/settings/payments');}
+ if(platform){({client}=await requirePlatformAdmin('/admin/settings/payments'));}else{const seller=await requireSellerFinance('/seller/settings/payments');client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,'/seller/settings/payments');}
  const back=platform?'/admin/settings/payments':'/seller/settings/payments';let query=client.from('payment_profiles').select('id');query=shopId?query.eq('shop_id',shopId):query.is('shop_id',null);const {data:profile}=await query.maybeSingle();
  const file=form.get('qr');if(!profile||!(file instanceof File)||file.size<12||file.size>3145728||form.get('confirmed')!=='yes')redirect(`${back}?notice=invalid_qr`);
  const bytes=Buffer.from(await file.arrayBuffer());let extension='',mime='';
@@ -31,7 +34,7 @@ export async function saveRecipientQR(form:FormData){
 export async function removeRecipientQR(form:FormData){
  const platform=form.get('scope')==='platform';let client,shopId:string|null=null;
  const back=platform?'/admin/settings/payments':'/seller/settings/payments';
- if(platform){({client}=await requirePlatformAdmin(back));}else{const seller=await requireSeller();client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,back);}
+ if(platform){({client}=await requirePlatformAdmin(back));}else{const seller=await requireSellerFinance('/seller/settings/payments');client=seller.client;shopId=seller.member.shop_id;await requireMfa(client,back);}
  if(form.get('confirmed')!=='yes')redirect(`${back}?notice=confirm_required`);
  let query=client.from('payment_profiles').select('id');query=shopId?query.eq('shop_id',shopId):query.is('shop_id',null);const {data:profile}=await query.maybeSingle();
  if(!profile)redirect(`${back}?notice=invalid_qr`);

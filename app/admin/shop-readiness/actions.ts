@@ -20,8 +20,9 @@ export async function adminPauseShopVisibility(form:FormData){
   const id=String(form.get('shop_id')||'');const reason=String(form.get('reason')||'').trim();
   if(!uuid.test(id)||reason.length<12||reason.length>1500||form.get('confirm')!=='yes')
     redirect('/admin/shop-readiness?notice=invalid');
-  const {error}=await client.rpc('pause_shop_visibility',{p_shop_id:id,p_reason:reason});
+  const restore=form.get('operation')==='restore';
+  const {error}=await client.rpc(restore?'release_shop_suspension':'suspend_shop',{p_shop:id,p_reason:reason});
   if(error){console.error('[Tidalis admin shop pause]',error.code);redirect('/admin/shop-readiness?notice=failed')}
   revalidatePath('/admin/shop-readiness');revalidatePath('/artists');revalidatePath('/shop');revalidatePath('/');
-  redirect('/admin/shop-readiness?notice=paused');
+  redirect('/admin/shop-readiness?notice='+(restore?'released':'paused'));
 }

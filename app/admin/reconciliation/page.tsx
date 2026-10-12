@@ -1,0 +1,3 @@
+import {requirePlatformAdmin} from '@/lib/auth';
+import ReconciliationQueue from '@/components/ReconciliationQueue';
+export default async function Reconciliation({searchParams}:{searchParams:Promise<{notice?:string;page?:string;paymentPage?:string;reconciliationPage?:string}>}){const {notice,page}=await searchParams;const {client}=await requirePlatformAdmin('/admin/reconciliation');return <main className="container page-pad"><div className="page-heading"><h1>กระทบยอด<em>การรับเงิน.</em></h1><p>ตรวจยอดเงินจริงของรายการที่ส่งมอบไม่ได้ แล้วดำเนินการคืนเงินตามประวัติ</p></div><ReconciliationQueue client={client} scope="admin" notice={notice} page={page}/></main>;}

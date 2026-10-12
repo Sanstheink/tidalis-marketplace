@@ -21,9 +21,9 @@ export default async function Applications({searchParams}:{searchParams:Promise<
   return <div className="container page-pad">
     <div className="page-heading"><div className="eyebrow">TIDALIS ADMIN</div>
       <h1>อนุมัติ<em>ผู้ขาย.</em></h1>
-      <p>ตรวจ Portfolio, ข้อตกลง และคำอธิบายก่อนตัดสินใจ การสร้างร้านเกิดขึ้นเฉพาะเมื่อกดอนุมัติ</p></div>
+      <p>ติดตามข้อมูลผู้ขายและประวัติเปิดร้าน คำขอใหม่เปิดร้านด้วยตนเองตามการตั้งค่าปัจจุบัน</p></div>
     {review&&notices[review]&&<div role="status" className="phase4-alert">{notices[review]}</div>}
-    <div className="workflow-strip"><span>01 ตรวจใบสมัคร</span><span>02 ผู้ขายเตรียมร้านและสินค้า</span><span>03 อนุมัติเปิดร้าน</span></div><p className="info-panel">การอนุมัติใบสมัครจะสร้างร้านสำหรับเตรียมข้อมูล ผู้ขายต้องส่งคำขอเปิดร้านให้ตรวจอีกครั้งก่อนแสดงต่อผู้ซื้อ</p><section className="phase4-card"><h2>การรับสมัครผู้ขาย</h2>
+    <div className="workflow-strip"><span>01 ตรวจใบสมัคร</span><span>02 ผู้ขายเตรียมร้านและสินค้า</span><span>03 อนุมัติเปิดร้าน</span></div><p className="info-panel">ในโหมดเปิดร้านเอง ผู้ขายยอมรับข้อตกลงและสร้างร้านได้ทันที จากนั้นเตรียมนโยบาย สินค้า และช่องทางรับเงินให้ครบ ส่วนคำขอเดิมในโหมดตรวจด้วยแอดมินยังมีประวัติให้ตรวจสอบ</p><section className="phase4-card"><h2>การรับสมัครผู้ขาย</h2>
       {intakeError?<p role="alert">ตรวจสถานะรับสมัครไม่สำเร็จ กรุณาลองใหม่</p>:<>
         <p>สถานะปัจจุบัน: <strong>{intake?.seller_intake_open?'เปิดรับสมัคร':'ปิดรับสมัคร'}</strong></p>
         <p>การเปิดรับสมัครต้องมี Seller Agreement ที่ผ่านการอนุมัติและเผยแพร่แล้ว</p>

@@ -1,8 +1,8 @@
-import {requireSeller,requireMfa} from '@/lib/auth';
+import {requireSellerFinance,requireMfa} from '@/lib/auth';
 import PaymentProfileEditor from '@/components/PaymentProfileEditor';
 import type {PaymentProfile} from '@/lib/payment-utils';
 export default async function SellerPaymentSettings({searchParams}:{searchParams:Promise<{notice?:string;currency?:string}>}){
- const {client,member,shop}=await requireSeller();await requireMfa(client,'/seller/settings/payments');
+ const {client,member,shop}=await requireSellerFinance('/seller/settings/payments');await requireMfa(client,'/seller/settings/payments');
  const {data:storedProfile,error}=await client.from('payment_profiles').select('*').eq('shop_id',member.shop_id).maybeSingle();if(error)throw Error('Payment settings unavailable');
  const requested=(await searchParams).currency;const selected=requested&&['THB','LAK','USD'].includes(requested)?requested:storedProfile?.bank_currency;
  const bank=storedProfile?.bank_accounts?.[selected||'THB'];const profile=storedProfile?{...storedProfile,bank_currency:selected,bank_name:bank?.bank,bank_account:bank?.account,bank_enabled:bank?.enabled||false,qr_private_path:bank?.qrPath||null}:null;
