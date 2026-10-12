@@ -1,5 +1,7 @@
 # Tidalis 0.6.4 — คู่มือส่งต่อให้เจ้าของโครงการ
 
+โค้ดเผยแพร่ที่ [PR #6](https://github.com/Sanstheink/tidalis-marketplace/pull/6), branch `feat/phase6-completion`, ต่อจาก PR #4 ยังไม่ได้ merge เข้า main หรือ promote เว็บไซต์ production
+
 ## ลำดับติดตั้ง
 
 คำสั่งล่าสุดวันที่ 12 ตุลาคม 2026 เวลา 11:07 น. อนุญาตให้นำโค้ดขึ้น GitHub และติดตั้ง Supabase แล้ว เจ้าของยังทดสอบใช้งานจริง เพิ่ม env และ deploy เว็บไซต์เอง ห้ามติดตั้ง migration ที่บันทึกว่าติดตั้งแล้วซ้ำ
@@ -32,7 +34,7 @@
 - ยังไม่มีข้อมูลผู้รับค่าบริการหรือผู้ออกใบเสร็จแพลตฟอร์มที่ตั้งค่าจริง ต้องกรอกผ่าน `/admin/settings/payments`
 - จำนวนคำสั่งซื้อ เอกสารและ ledger ยังคงเป็น 0 ไม่มีการเพิ่มผู้ใช้หรือรายการธุรกิจเพื่อทดสอบ
 - Security advisors ไม่มีหมวดคำเตือนใหม่: RLS ไม่มี policy 1 รายการเป็นตารางจองที่ตั้งใจปิดสิทธิ์ตรง; helper definer ที่ anon เรียกได้ 2 รายการเดิม; definer ที่ authenticated เรียกได้ลดจาก 31 เป็น 29; leaked-password protection ยังไม่ได้เปิด
-- ดูแนวทาง [definer function permissions](https://supabase.com/docs/guides/database/linter?lint=0028_anon_security_definer_function_executable), [RLS policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) และ [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
+- ดูแนวทาง [definer function permissions](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [RLS policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) และ [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
 
 ## การตั้งค่าจริง
 
