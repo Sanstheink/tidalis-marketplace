@@ -22,7 +22,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
 // Valid empty ZIP: test delivery is gated; these are synthetic local objects.
 const zip=Buffer.from('504b0506000000000000000000000000000000000000','hex');
 for(const file of files){const {error}=await admin.storage.from('tidalis-product-files').upload(file.file_path,file.is_delivery_file?zip:png,{contentType:file.is_delivery_file?'application/zip':'image/png'});if(error)throw Error(`Local fixture upload failed: ${error.message}`);}
-sql(`update public.marketplace_settings set fixed_orders_enabled=true,self_service_shops=false,seller_self_publish=false;insert into public.platform_roles(user_id,role) values('10000000-0000-4000-8000-000000000004','admin') on conflict do nothing;`);
+sql(`update public.marketplace_settings set fixed_orders_enabled=true,seller_intake_open=false,self_service_shops=false,seller_self_publish=false;insert into public.platform_roles(user_id,role) values('10000000-0000-4000-8000-000000000004','admin') on conflict do nothing;`);
 sql(`insert into public.payment_profiles(shop_id,recipient_name,billing_address,bank_accounts,updated_by) values('20000000-0000-4000-8000-000000000001','Local Test Seller','Synthetic local test address 123','{"THB":{"bank":"Local Test Bank","account":"1111111111","enabled":true}}','10000000-0000-4000-8000-000000000001');`);
 const totpSecrets={};
 for(const name of ['seller','admin','selfseller']){

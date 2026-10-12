@@ -62,5 +62,7 @@ jobs:
         if: always()
         with:
           name: checkout-ui
-          path: test-results/checkout-ui/
+          path: |
+            test-results/checkout-ui/
+            test-results/**/error-context.md
           if-no-files-found: ignore
