@@ -53,6 +53,7 @@ test('buyer signs in through UI, orders with correct license/total, retains othe
 });
 test('a lost response after database commit survives reload and creates only one order',async({page})=>{
   await login(page);await addBrush(page);await page.goto('/checkout/moonlit-test-studio');await page.getByRole('checkbox').check();
+  await page.getByLabel('หมายเหตุ (ไม่บังคับ)').fill('Non-empty note must not require retyping after response loss.');
   let dropped=false;
   await page.route('**/checkout/moonlit-test-studio',async route=>{
     if(!dropped&&route.request().method()==='POST'&&route.request().headers()['next-action']){
@@ -61,9 +62,53 @@ test('a lost response after database commit survives reload and creates only one
   });
   await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.locator('.commerce-summary [role="alert"]')).toContainText('ยังยืนยันผลไม่ได้');
   const client=await signed();const before=await client.from('orders').select('id').eq('status','pending');expect(before.data).toHaveLength(1);
-  await page.unroute('**/checkout/moonlit-test-studio');await page.reload();await page.getByRole('checkbox').check();
-  await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page).toHaveURL(new RegExp(`/account/orders/${before.data![0].id}$`));
+  await page.unroute('**/checkout/moonlit-test-studio');await page.reload();
+  await page.getByRole('button',{name:'ดูคำสั่งซื้อที่บันทึกแล้ว',exact:true}).click();await expect(page).toHaveURL(new RegExp(`/account/orders/${before.data![0].id}$`));
+  await expect(page.locator('.order-note')).toHaveText('Non-empty note must not require retyping after response loss.');
   const after=await client.from('orders').select('id').eq('status','pending');expect(after.data).toHaveLength(1);
+});
+test('the final exclusive item recovers after response loss, including a temporary recovery outage',async({page})=>{
+  await login(page);await page.goto(`/products/violet-exclusive--${exclusive}`);
+  await page.getByRole('button',{name:'เพิ่มลงตะกร้า',exact:true}).click();await page.goto('/checkout/moonlit-test-studio');await page.getByRole('checkbox').check();
+  let dropped=false;
+  await page.route('**/checkout/moonlit-test-studio',async route=>{
+    if(!dropped&&route.request().method()==='POST'&&route.request().headers()['next-action']){
+      const response=await route.fetch();expect(response.status()).toBe(200);dropped=true;await route.abort('failed');
+    }else await route.continue();
+  });
+  await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.locator('.commerce-summary [role=alert]')).toContainText('ยังยืนยันผลไม่ได้');
+  const client=await signed();const before=await client.from('orders').select('id,idempotency_key').eq('status','pending');expect(before.error).toBeNull();expect(before.data).toHaveLength(1);
+  const stock=await client.rpc('get_fixed_checkout',{p_shop_id:shop,p_product_ids:[exclusive]});expect(stock.error).toBeNull();expect(stock.data.products[0].available).toBe(0);
+  await page.unroute('**/checkout/moonlit-test-studio');
+  await page.route('**/checkout/moonlit-test-studio',async route=>{
+    if(route.request().method()==='POST'&&route.request().postData()?.includes(before.data![0].idempotency_key))await route.abort('failed');else await route.continue();
+  });
+  await page.reload();await expect(page.getByRole('alert').filter({hasText:'ยังตรวจสอบคำสั่งซื้อก่อนหน้าไม่ได้'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'ยืนยันและจองสินค้า'})).toBeDisabled();
+  await page.unroute('**/checkout/moonlit-test-studio');await page.getByRole('button',{name:'ตรวจสอบคำสั่งซื้อเดิมอีกครั้ง',exact:true}).click();
+  await page.getByRole('button',{name:'ดูคำสั่งซื้อที่บันทึกแล้ว',exact:true}).click();await expect(page).toHaveURL(new RegExp(`/account/orders/${before.data![0].id}$`));
+  const after=await client.from('orders').select('id').eq('status','pending');expect(after.data).toHaveLength(1);
+  await page.goto('/cart');await expect(page.locator('.shop-cart')).toHaveCount(0);
+});
+test('checkout sends no order when retry storage is blocked and resumes after storage is restored',async({page})=>{
+  await login(page);await addBrush(page);await page.goto('/checkout/moonlit-test-studio');await page.getByRole('checkbox').check();
+  await page.evaluate(()=>{
+    const original=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){if(key.startsWith('tidalis:order-attempt:'))throw new DOMException('Blocked for regression','QuotaExceededError');return original.call(this,key,value)};
+  });
+  await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page.locator('.commerce-summary [role=alert]')).toContainText('ยังบันทึกรหัสคำขอในเบราว์เซอร์ไม่ได้');
+  const client=await signed();const blocked=await client.from('orders').select('id').eq('status','pending');expect(blocked.error).toBeNull();expect(blocked.data).toEqual([]);
+  await page.reload();await page.getByRole('checkbox').check();await page.getByRole('button',{name:'ยืนยันและจองสินค้า'}).click();await expect(page).toHaveURL(/\/account\/orders\/[0-9a-f-]{36}$/);
+});
+test('a copied recovery key cannot expose a different buyer order',async({page})=>{
+  const client=await signed();const {data:context,error}=await client.rpc('get_fixed_checkout',{p_shop_id:shop,p_product_ids:[brush]});expect(error).toBeNull();const key=randomUUID();
+  const created=await client.rpc('create_fixed_order',{p_shop_id:shop,p_items:[{productId:brush,license:'personal',quantity:1,expectedPriceMinor:12675,expectedTerms:'Local test license for personal use only.'}],p_note:'Recovery ownership test',p_policy_ids:context.policies.map((p:{id:string})=>p.id),p_idempotency_key:key});expect(created.error).toBeNull();
+  await login(page,'/account/orders','other');await addBrush(page);
+  const other=await signed('other');const {data:{user}}=await other.auth.getUser();
+  await page.evaluate(({buyerId,shop,key})=>sessionStorage.setItem(`tidalis:order-attempt:v1:${buyerId}:${shop}`,JSON.stringify({key,fingerprint:'a'.repeat(64)})),{buyerId:user!.id,shop,key});
+  await page.goto('/checkout/moonlit-test-studio');await page.getByRole('checkbox').check();
+  await expect(page.getByRole('button',{name:'ดูคำสั่งซื้อที่บันทึกแล้ว',exact:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'ยืนยันและจองสินค้า'})).toBeEnabled();
+  expect((await page.goto(`/account/orders/${created.data}`))!.status()).toBe(404);
 });
 test('concurrent authenticated buyers cannot reserve an exclusive twice; only the owner can cancel',async()=>{
   const first=await signed(),second=await signed('other');
