@@ -131,7 +131,8 @@ test('commission response loss and reload reuse the committed request',async()=>
   }else await route.continue();
  });
  await buyer.getByLabel('รายละเอียดงานและสิ่งที่ต้องการ').fill(brief);await buyer.getByLabel(/ฉันอ่านและยอมรับนโยบาย/).check();await buyer.getByRole('button',{name:'ส่งบรีฟให้ศิลปิน',exact:true}).click();
- await expect(buyer.getByRole('alert')).toContainText('ยังยืนยันผลไม่ได้');expect(dropped).toBe(true);
+ const requestForm=buyer.locator('form.operations-form');
+ await expect(requestForm.getByRole('alert')).toContainText('ยังยืนยันผลไม่ได้');expect(dropped).toBe(true);
  const before=await service().from('orders').select('id').eq('buyer_note',brief);expect(before.error).toBeNull();expect(before.data).toHaveLength(1);
  await buyer.unroute('**/account/commissions/new?product=*');await buyer.reload();
  await buyer.getByLabel('รายละเอียดงานและสิ่งที่ต้องการ').fill(brief);await buyer.getByLabel(/ฉันอ่านและยอมรับนโยบาย/).check();await buyer.getByRole('button',{name:'ส่งบรีฟให้ศิลปิน',exact:true}).click();
