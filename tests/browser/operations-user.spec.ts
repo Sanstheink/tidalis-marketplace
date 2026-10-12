@@ -140,7 +140,8 @@ test('commission response loss and reload reuse the committed request',async()=>
  const after=await service().from('orders').select('id').eq('buyer_note',brief);expect(after.error).toBeNull();expect(after.data).toHaveLength(1);
  await buyer.getByText('ยกเลิกคำขอก่อนชำระเงิน',{exact:true}).click();
  const cancel=buyer.locator('form').filter({has:buyer.getByRole('button',{name:'ยกเลิกคำขอ',exact:true})});await cancel.getByLabel('เหตุผล',{exact:true}).fill('Synthetic isolated retry regression cleanup.');await cancel.getByRole('button',{name:'ยกเลิกคำขอ',exact:true}).click();
- await expect(buyer.locator('.page-heading')).toContainText('ยกเลิกแล้ว');
+ await expect(buyer.locator('.commerce-heading .order-status')).toHaveText('ยกเลิกแล้ว');
+ const cancelled=await service().from('orders').select('status').eq('id',before.data![0].id).single();expect(cancelled.error).toBeNull();expect(cancelled.data!.status).toBe('cancelled');
 });
 
 test('commission quote, direct payment, private revision delivery, receipt and full refund work through the UI',async()=>{
