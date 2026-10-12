@@ -31,8 +31,14 @@
 - Source/import, 34 unit tests, 114 database regressions, TypeScript และ production build ผ่าน
 - Browser ทั่วไป 10/10 ผ่าน รวม OTP, เส้นทางที่ต้องล็อกอิน, no-store และ viewport มือถือ
 - เพิ่ม SQL/RLS smoke test ที่ rollback, การตรวจ function/policy drift และ regressions สำหรับ PDF/การอนุมัติผู้ขาย
-- เพิ่ม browser test สำหรับ Commission response loss/reload และการบันทึก PDF ด้วย AAL1 ก่อนเผยแพร่ด้วย MFA; ผล real Auth/MFA/Storage ใน GitHub CI จะบันทึกเมื่อรันจบ
+- Browser user flows ผ่านครบ 18/18 ด้วย Auth, MFA, Postgres และ Storage จริงในระบบแยก รวม Commission response loss/reload ที่ใช้คำขอเดิมและมี order เดียว การยกเลิกตรวจทั้งสถานะบนหน้าเว็บและฐานข้อมูล และการบันทึก PDF ด้วย AAL1 ก่อนเผยแพร่ด้วย MFA
+- แก้ locator ของ regression test ให้เลือก alert ภายในฟอร์มคำขอและสถานะในส่วนหัวของหน้ารายการจริง ทำให้ทดสอบขั้นตอน retry และยกเลิกได้ครบ
+- รวม 176 กรณีผ่าน (34 unit + 114 database + 10 browser ทั่วไป + 18 user flows) แยกจาก hosted SQL/RLS probes อีก 8/8
 - ใช้บัญชีและรายการสังเคราะห์ใน Supabase แยกของ CI สำหรับ browser user flows; ไม่ทดสอบโอนเงินจริงหรือสร้างธุรกรรมถาวรใน hosted project
+
+## หลักฐาน CI สุดท้าย
+
+โค้ดที่ตรวจผ่านคือ commit `faaddecbffaf54a77d014897b673a2432fd61d55` บน [PR #7](https://github.com/Sanstheink/tidalis-marketplace/pull/7) ทั้ง jobs `verify` และ `user-flow` สำเร็จใน [run 38272450706](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38272450706) และ [run 38272448861](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38272448861) เมื่อ 12 ตุลาคม 2026 การอัปเดตเอกสารหลัง commit นี้ไม่เปลี่ยนโค้ดหรือ tests
 
 ## ข้อจำกัดและคำเตือนที่ตรวจแล้ว
 

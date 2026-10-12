@@ -1,10 +1,10 @@
-# Tidalis 0.6.4 — คู่มือส่งต่อให้เจ้าของโครงการ
+# Tidalis 0.6.6 — คู่มือส่งต่อให้เจ้าของโครงการ
 
-โค้ดเผยแพร่ที่ [PR #6](https://github.com/Sanstheink/tidalis-marketplace/pull/6), branch `feat/phase6-completion`, ต่อจาก PR #4 ยังไม่ได้ merge เข้า main หรือ promote เว็บไซต์ production
+ชุดแก้ไขล่าสุดเผยแพร่ที่ [PR #7](https://github.com/Sanstheink/tidalis-marketplace/pull/7), branch `fix/audit-integrity-20261012`, ต่อจาก [PR #6](https://github.com/Sanstheink/tidalis-marketplace/pull/6) และ dependencies เดิม ยังไม่ได้ merge เข้า main หรือ promote เว็บไซต์ production
 
 ## ลำดับติดตั้ง
 
-คำสั่งล่าสุดวันที่ 12 ตุลาคม 2026 เวลา 11:07 น. อนุญาตให้นำโค้ดขึ้น GitHub และติดตั้ง Supabase แล้ว เจ้าของยังทดสอบใช้งานจริง เพิ่ม env และ deploy เว็บไซต์เอง ห้ามติดตั้ง migration ที่บันทึกว่าติดตั้งแล้วซ้ำ
+คำสั่งล่าสุดวันที่ 12 ตุลาคม 2026 อนุญาตให้แก้ข้อผิดพลาดและทดสอบต่อแล้ว โค้ดส่งขึ้น PR #7; เจ้าของยังจัดการข้อมูลบัญชีจริง การเพิ่ม env และ deploy เว็บไซต์เอง ห้ามติดตั้ง migration ที่บันทึกว่าติดตั้งแล้วซ้ำ
 
 1. สำรองฐานข้อมูลและตรวจ migration history ของโครงการที่จะใช้ก่อน
 2. โครงการเดิม `fdwiwaawqrenxxvdsnqs` ติดตั้งไฟล์ต่อไปนี้เรียบร้อยแล้ว ส่วนฐานใหม่ให้ติดตั้งตามลำดับ:
@@ -16,7 +16,7 @@
 
 ## ประวัติ timestamp ของโครงการเดิม
 
-ตรวจ migration ledger หลังติดตั้งเมื่อ 12 ตุลาคม 2026 เวลา 11:12 น. (Asia/Bangkok) Historical 001–010 เคยติดตั้งด้วยมือ ต้องตรวจ ledger ให้ตรงก่อนใช้ CLI
+ตรวจ migration ledger หลังติดตั้งเมื่อ 12 ตุลาคม 2026 รวมแพตช์ audit 0.6.6 แล้ว Historical 001–010 เคยติดตั้งด้วยมือ ต้องตรวจ ledger ให้ตรงก่อนใช้ CLI
 
 | Source | Hosted version ที่บันทึกไว้ |
 | --- | --- |
@@ -26,6 +26,7 @@
 | `20261011214338_public_catalog_currency_access.sql` | `20261011214431` |
 | `20261011223939_phase6_commissions_refunds_receipts.sql` | `20261012041028` |
 | `20261012025119_self_service_zero_documents.sql` | `20261012041102` |
+| `20261012132920_audit_integrity_repairs.sql` | `20261012134242` |
 
 ## สถานะหลังติดตั้ง
 
@@ -76,10 +77,18 @@
 คำสั่ง typecheck/source check ตรวจเฉพาะ source ผล runtime, SQL migration, build และ browser ต้องตรวจแยกก่อนเจ้าของ deploy ดูผลที่ทำจริงใน PHASE6_COMPLETION.md
 
 
-## แพตช์ 0.6.5 และผลตรวจล่าสุด
+## ประวัติแพตช์ 0.6.5
 
 แก้การเผยแพร่สินค้า ข้อมูลผู้รับเงินและผู้ออกเอกสาร โดยไม่ต้องเพิ่ม SQL migration หรือ env ในแพตช์นี้ ผ่าน unit 26, database 99, browser ทั่วไป 10 และ user flows 16 รวม 151 กรณี พร้อม typecheck/build บน GitHub Actions run 38210840232 โค้ดที่ทดสอบคือ commit 812d47ca44620d605a35f153a5e84a5073e2f01c ดู PAYMENT_HOTFIX_REPORT.md สำหรับขอบเขตจริงของการทดสอบ
 
 ใช้ค่าบัญชี/ที่อยู่/ผู้ออกเอกสารจริงของเจ้าของเท่านั้น ไม่คัดลอก fixtures ของ tests ไปยังโครงการ hosted การยืนยันรับเงินจริงและการออกเอกสารยังต้องใช้ Authenticator AAL2 ข้อมูลที่ไม่ผ่านการตรวจจะแสดงที่ฟอร์มและยังเก็บค่าที่กรอกไว้
 
 Vercel Git build check ผ่าน แต่บัญชีที่เชื่อมผ่านเครื่องมือจัดการไม่มีสิทธิ์ทีมโครงการ (403) ยังไม่มี production promotion หรือการยืนยัน active production commit ในการดำเนินการนี้ ไม่ได้เปลี่ยน env
+
+## แพตช์ 0.6.6 และผลตรวจล่าสุด
+
+ซ่อมฟังก์ชัน hosted ที่เก่า 5 ตัว เพิ่ม foreign-key indexes 44 จุด แก้ Commission retry หลังคำตอบหาย และการรายงานข้อผิดพลาด/แบ่งหน้าข้อมูลภาษี Migration `20261012132920_audit_integrity_repairs.sql` ติดตั้งแล้วตาม ledger ด้านบน ไม่ต้องเพิ่ม env
+
+โค้ด commit `faaddecbffaf54a77d014897b673a2432fd61d55` ผ่าน unit 34, database 114, browser ทั่วไป 10 และ user flows ที่ใช้ Auth/MFA/Storage จริงในระบบแยก 18 รวม 176 กรณี พร้อม typecheck/build ทั้งสอง jobs สำเร็จใน [GitHub Actions run 38272450706](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38272450706) Hosted SQL/RLS probes อีก 8/8 ผ่านและ rollback ข้อมูลทดสอบทั้งหมด
+
+ดู [AUDIT_REPAIR_0_6_6.md](AUDIT_REPAIR_0_6_6.md) สำหรับหลักฐาน schema ขอบเขตทดสอบ และ advisory ที่ยังมีอยู่ Leaked Password Protection ยังต้องตรวจ/เปิดผ่าน Dashboard ส่วนข้อมูลบัญชีรับเงินและการเผยแพร่สินค้าให้ใช้ข้อมูลจริงของเจ้าของก่อนเปิดขาย
