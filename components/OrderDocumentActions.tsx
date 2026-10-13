@@ -1,0 +1,22 @@
+import Link from 'next/link';
+import {CreditCard,FileText,Download,ShieldCheck,CheckCircle2} from 'lucide-react';
+import type {SupabaseClient} from '@supabase/supabase-js';
+import {orderState} from '@/lib/marketplace-cart-utils';
+type Order={id:string;buyer_id:string;order_kind:string;status:string;accepted_quote_id:string|null;reservation_expires_at:string|null;total_minor:number};
+export default async function OrderDocumentActions({client,order}:{client:SupabaseClient;order:Order}){
+ const [payment,receipt,entitlements,items]=await Promise.all([
+ client.from('payment_attempts').select('id,status').eq('order_id',order.id).eq('status','confirmed').limit(1).maybeSingle(),
+ client.from('financial_documents').select('id').eq('order_id',order.id).eq('document_type','receipt').eq('status','issued').maybeSingle(),
+ client.from('download_entitlements').select('order_item_id,item:order_items!inner(order_id)').eq('item.order_id',order.id).eq('buyer_id',order.buyer_id).is('revoked_at',null),
+ client.from('order_items').select('id,product_id,item_snapshot').eq('order_id',order.id)]);
+ if([payment,receipt,entitlements,items].some(r=>r.error))throw Error('Order actions unavailable');
+ const ids=new Set(entitlements.data?.map(e=>e.order_item_id)),unlocked=(items.data||[]).filter(i=>ids.has(i.id));
+ const productIds=unlocked.map(i=>i.product_id);const files=order.order_kind==='fixed'&&productIds.length?await client.from('product_files').select('id,product_id,file_path').in('product_id',productIds).eq('is_delivery_file',true).order('created_at'):{data:[],error:null};if(files.error)throw Error('Order downloads unavailable');
+ const paid=Boolean(payment.data),state=orderState(order.status,order.reservation_expires_at),payable=!paid&&order.total_minor>0&&['pending','awaiting_payment','payment_review'].includes(order.status)&&state!=='expired';
+ return <section className="order-hub" aria-label="ชำระเงินและเอกสาร"><div className="order-hub-top"><div><span className="eyebrow">YOUR NEXT STEP</span><h2>{order.status==='refunded'?'คืนเงินเรียบร้อยแล้ว':order.status==='refund_pending'?'กำลังดำเนินการคืนเงิน':paid?'ชำระเงินเรียบร้อยแล้ว':payable?'พร้อมชำระเงิน':order.status==='awaiting_acceptance'?'ตรวจและยอมรับใบเสนอราคา':'ติดตามรายการของคุณ'}</h2><p>{paid?'เก็บใบเสร็จและติดตามการส่งมอบได้ที่นี่':payable?'ตรวจข้อมูลผู้รับใบเสร็จ แล้วเลือกวิธีชำระเงินในหน้าถัดไป':'สถานะ เอกสาร และไฟล์งานจะอัปเดตตามรายการนี้'}</p></div><span className="order-hub-symbol" aria-hidden="true">{paid?<CheckCircle2 size={30}/>:<CreditCard size={30}/>}</span></div>
+ <div className="order-action-row">{payable?<Link className="btn btn-primary" href={`/account/orders/${order.id}/payment`}><CreditCard size={17}/> {order.status==='payment_review'?'ติดตามการชำระเงิน':'ไปชำระเงิน'}</Link>:null}
+ {paid?(receipt.data?<a className="btn btn-outline" href={`/account/orders/${order.id}/documents/receipt`}><FileText size={17}/> ดาวน์โหลดใบเสร็จรับเงิน</a>:<p role="status">ร้านกำลังจัดเตรียมใบเสร็จรับเงิน หากต้องการแก้ข้อมูลเอกสารให้ติดต่อร้าน</p>):order.accepted_quote_id?<a className="btn btn-outline" href={`/account/orders/${order.id}/documents/quotation`}><FileText size={17}/> ดาวน์โหลดใบเสนอราคา (สำเนา)</a>:null}</div>
+ {!paid&&order.accepted_quote_id?<small className="document-copy-note">สำเนาสำหรับเก็บเป็นหลักฐาน ต้นฉบับอยู่ในระบบของร้านค้า</small>:null}
+ {order.order_kind==='fixed'&&unlocked.length?<div className="order-download-list">{unlocked.map(i=>{const itemFiles=(files.data||[]).filter(f=>f.product_id===i.product_id);return <div className="order-download-item" key={i.id}><div><span className="eyebrow">READY TO DOWNLOAD</span><h3>{i.item_snapshot?.name||'ผลงาน'}</h3></div><div className="order-action-row">{itemFiles.length===1?<a className="btn btn-primary" href={`/account/library/${i.id}/${itemFiles[0].id}`}><Download size={17}/> ดาวน์โหลดงาน</a>:itemFiles.length>1?<details className="download-file-picker"><summary className="btn btn-primary">ดาวน์โหลดงาน ({itemFiles.length} ไฟล์)</summary><div>{itemFiles.map((f,n)=><a key={f.id} href={`/account/library/${i.id}/${f.id}`}>ไฟล์ {n+1} · {f.file_path.split('.').pop()?.toUpperCase()}</a>)}</div></details>:<p role="status">ร้านกำลังตรวจสอบไฟล์ กรุณาติดต่อผู้ขาย</p>}<a className="btn btn-outline" href={`/account/library/${i.id}/licence`}><ShieldCheck size={17}/> ดาวน์โหลด Licence</a></div></div>;})}</div>:null}
+ </section>;
+}

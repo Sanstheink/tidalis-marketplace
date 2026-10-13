@@ -16,12 +16,14 @@ function proofType(bytes:Buffer){
  return null;
 }
 export async function startPayment(form:FormData){
- const order=id(form,'orderId'),invoice=id(form,'invoiceId');const back=order?`/account/orders/${order}`:invoice?`/seller/finance/${invoice}`:'/account/orders';
+ const order=id(form,'orderId'),invoice=id(form,'invoiceId');const back=order?`/account/orders/${order}/payment`:invoice?`/seller/finance/${invoice}`:'/account/orders';
  const {client}=await requireUser(back);if(invoice)await requireMfa(client,back);
  const method=String(form.get('method')||'');
  if((!order&&!invoice)||(order&&invoice)||!['bank_transfer','qr_code','promptpay'].includes(method))failure(back,'method_unavailable');
  if(!supabaseService())failure(back,'payment_configuration_required');
- const {data,error}=await client.rpc('create_payment_attempt',{p_order_id:order,p_invoice_id:invoice,p_method:method});
+ let useRecipient=false;
+ if(order){const [recipient,prior]=await Promise.all([client.from('order_receipt_recipients').select('order_id').eq('order_id',order).maybeSingle(),client.from('payment_attempts').select('id').eq('order_id',order).limit(1).maybeSingle()]);if(recipient.error||prior.error)failure(back,'receipt_unavailable');useRecipient=Boolean(recipient.data||!prior.data);}
+ const {data,error}=useRecipient?await client.rpc('create_order_payment',{p_order:order,p_method:method,p_name:String(form.get('recipientName')||'').trim(),p_address:String(form.get('recipientAddress')||'').trim()}):await client.rpc('create_payment_attempt',{p_order_id:order,p_invoice_id:invoice,p_method:method});
  if(error)failure(back,error.message);revalidatePath(back);redirect(`/payments/${data}`);
 }
 export async function uploadPaymentProof(form:FormData){

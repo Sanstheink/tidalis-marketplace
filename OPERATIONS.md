@@ -100,3 +100,12 @@ Checkout ตรวจคำสั่งซื้อที่บันทึก�
 ไม่เพิ่ม migration หรือ env และไม่แก้ข้อมูลธุรกิจใน hosted Supabase การเปิดรายการเดิมตรวจสิทธิ์ผู้ซื้อและรักษารายการอื่นในตะกร้า ดูหลักฐานการทดสอบฉบับสุดท้ายใน [CHECKOUT_REPAIR_0_6_7.md](CHECKOUT_REPAIR_0_6_7.md)
 
 โค้ด `212b6d419ef6a9cb66875fdbbfe7f9c5f878f32e` ผ่าน 188 กรณี (unit 43 + database 114 + browser ทั่วไป 10 + user flows 21) พร้อม TypeScript/build ทั้ง jobs `verify` และ `user-flow` สำเร็จใน [run 38293483131](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38293483131) วันที่ 13 ตุลาคม 2026 (Asia/Bangkok)
+
+
+## Order payment documents 0.6.8
+
+See [ORDER_DOCUMENTS_0_6_8.md](./ORDER_DOCUMENTS_0_6_8.md) and PR #10. Hosted migration `20261013122721` / `order_payment_documents` is already applied; its source is `20261012195555_order_payment_documents.sql`. Do not apply it a second time or replay older migrations.
+
+Deploy code including PR #9 and its dependencies before PR #10. Buyers of new payments enter their receipt identity on `/account/orders/[id]/payment`. Shop confirmation creates the ordinary receipt atomically; uploading a slip alone does not. Legacy attempts without that identity retain shop issuance. Corrections use seller receipt void/reissue. Original quote and receipt snapshots remain immutable. Work and Licence downloads require active purchase entitlements; full refunds revoke both. PDFs require the checked-in `assets/fonts/Sarabun-Regular.ttf`, which Next.js output tracing includes automatically.
+
+The final code passed 208 cases, TypeScript and production build in Actions run 38396633629. Production deployment remains owner-managed.
