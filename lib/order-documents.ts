@@ -22,10 +22,10 @@ export async function quotationDocument(client:SupabaseClient,order:Order,origin
  {title:'สิทธิ์การใช้งานตามที่ตกลง',lines:[s.license_terms]}],footer:original?'ต้นฉบับเก็บในระบบของร้านค้า ใบเสนอราคาไม่ใช่หลักฐานการรับเงิน':'สำเนาจากต้นฉบับที่ร้านค้าเก็บในระบบ ใบเสนอราคาไม่ใช่หลักฐานการรับเงิน'};
 }
 export async function receiptDocument(client:SupabaseClient,id:string,owner:{buyerId:string}|{shopId:string}):Promise<OrderDocument>{
- const {data:d,error}=await client.from('financial_documents').select('id,order_id,shop_id,document_type,document_number,status,document_snapshot,issued_at,void_reason').eq('id',id).in('document_type',['receipt','credit_note']).maybeSingle();if(error)throw Error('Receipt unavailable');if(!d)notFound();
+ const {data:d,error}=await client.from('financial_documents').select('id,order_id,shop_id,document_type,document_number,status,document_snapshot,issued_at,void_reason').eq('id',id).in('document_type',['receipt','credit_note']).in('status',['issued','void']).maybeSingle();if(error)throw Error('Receipt unavailable');if(!d)notFound();
  await ownedDocumentOrder(client,d.order_id,owner);const s=d.document_snapshot;if(!s.issuer||!s.recipient||!Array.isArray(s.items))notFound();
  const original='shopId' in owner;
- return {title:d.status==='void'?'เอกสารยกเลิก':d.document_type==='receipt'?'ใบเสร็จรับเงิน':'เอกสารยืนยันคืนเงิน',number:d.document_number,edition:original?'ต้นฉบับสำหรับร้านค้า':'สำเนาสำหรับลูกค้า',reference:`คำสั่งซื้อ ${d.order_id}`,sections:[
+ return {title:d.status==='void'?'เอกสารยกเลิก':d.document_type==='receipt'?'ใบเสร็จรับเงิน':'เอกสารยืนยันคืนเงิน',number:d.document_number,edition:(d.status==='void'?'เอกสารยกเลิก / ':'')+(original?'ต้นฉบับสำหรับร้านค้า':'สำเนาสำหรับลูกค้า'),reference:`คำสั่งซื้อ ${d.order_id}`,sections:[
  {title:'ผู้ออกเอกสาร',lines:[s.issuer.name,s.issuer.address,`วันที่ออก ${date(d.issued_at)}`]},
  {title:'ผู้รับเอกสาร',lines:[s.recipient.name,...(s.recipient.address?[s.recipient.address]:[])]},
  {title:'รายการ',lines:s.items.map((i:{name:string;license:string;quantity:number;total_minor:number})=>`${i.name} / ${i.license==='commercial'?'ใช้เชิงพาณิชย์':i.license==='personal'?'ใช้ส่วนตัว':''} / จำนวน ${i.quantity} / ${money(i.total_minor,s.currency)}`)},
