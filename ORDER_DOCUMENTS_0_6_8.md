@@ -14,10 +14,28 @@ All download routes require authenticated ownership; shop originals also require
 
 Additive migration: `supabase/migrations/20261012195555_order_payment_documents.sql`.
 
-Apply this migration before deploying 0.6.8. Do not replay historic migrations or use `db push --include-all` against the hosted project. This change adds receipt recipients, an atomic order-payment RPC, automatic receipt issuance for new payments, and accepted quotation snapshots. Legacy payment RPCs remain supported.
+Applied to hosted Supabase project `fdwiwaawqrenxxvdsnqs` on 2026-10-13 at 12:27 UTC, recorded as migration `20261013122721` (`order_payment_documents`). The source migration timestamp remains `20261012195555`. The database is ready for deployment of 0.6.8. Do not replay historic migrations or use `db push --include-all` against the hosted project. This change adds receipt recipients, an atomic order-payment RPC, automatic receipt issuance for new payments, and accepted quotation snapshots. Legacy payment RPCs remain supported.
 
 ## Validation
 
-Local source checks, existing regressions, TypeScript and production build have been run. New database, document and browser checks cover duplicate submission, immutable originals, foreign-account access, pre/post-payment document switching, automatic receipts, receipt correction, entitlement revocation, Thai PDF generation and mobile layout. Final CI results and hosted migration status will be recorded after verification.
+Verified code commit: `3ea978b5cd52e3c477fc9509e75e71e683688660`.
+
+[GitHub Actions run 38396633629](https://github.com/Sanstheink/tidalis-marketplace/actions/runs/38396633629): both `verify` and `user-flow` passed.
+
+| Validation | Passed |
+| --- | ---: |
+| Unit tests | 51 |
+| Isolated PostgreSQL regressions | 126 |
+| General browser tests | 10 |
+| Real Auth / MFA / Postgres / private Storage browser flows | 21 |
+| Total | 208 |
+
+Source/import checks, TypeScript and production build also passed. Production dependency audit reported zero known vulnerabilities. The optional four live-production tests were not run; no real customer purchase or transfer was created for testing.
+
+The browser flows verify Commission quote acceptance, separate payment pages, customer copies and seller originals, automatic receipts, asset work/Licence links, wrong-account rejection, receipt access after refunds, Licence revocation, PromptPay and private bank QR switching, recipient identity preservation, mobile overflow and minimum text contrast of 4.5 for the new action/guidance UI. Earlier verification found and corrected an outdated inline-QR test and poor contrast in the first dark-theme design.
+
+PDF QA rendered Thai receipt and Licence documents (one page each) and a six-page quotation. No text extended outside the page bounds. A footer pagination issue was fixed and covered by a regression. Draft receipts are denied; void receipts carry a cancellation label on every page.
+
+Hosted read-only checks confirmed RLS on receipt recipients, no anonymous access, no direct authenticated inserts, no anonymous execution of the new payment RPC, no client execution of the internal receipt issuer, and all three new triggers. Security Advisor findings were unchanged from the pre-migration baseline. Existing notices concern intentionally guarded legacy RPCs ([function access guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)), the deliberately closed reservation table, and [Leaked Password Protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). No new advisory finding was introduced.
 
 No main merge or Production deployment is performed by this patch.
