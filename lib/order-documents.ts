@@ -18,7 +18,7 @@ export async function quotationDocument(client:SupabaseClient,order:Order,origin
  return {title:'ใบเสนอราคา',number:s.number,edition:original?'ต้นฉบับสำหรับร้านค้า':'สำเนาสำหรับลูกค้า',reference:`คำสั่งซื้อ ${order.id}`,sections:[
  {title:'ร้านค้าและรายการ',lines:[s.shop?.name||'ร้านศิลปิน',`ผู้ซื้อ ${order.buyer_id}`,`ใบเสนอราคาฉบับ ${s.version} / บรีฟฉบับ ${s.brief_version}`,`ออกเมื่อ ${date(s.issued_at)}`,`ลูกค้ายอมรับเมื่อ ${date(s.accepted_at)}`]},
  {title:'ขอบเขตงาน',lines:[s.scope]},
- {title:'ราคาและการส่งมอบ',lines:[`ยอดรวม ${money(s.amount_minor,s.currency)}`,`ส่งภายใน ${s.delivery_days} วันหลังยืนยันรับเงิน / แก้ไขได้ ${s.revisions} ครั้ง`,`ใบเสนอราคาใช้ได้ถึง ${date(s.expires_at)}`]},
+ {title:'ราคาและการส่งมอบ',layout:'summary',lines:[`ยอดรวม ${money(s.amount_minor,s.currency)}`,`ส่งภายใน ${s.delivery_days} วันหลังยืนยันรับเงิน / แก้ไขได้ ${s.revisions} ครั้ง`,`ใบเสนอราคาใช้ได้ถึง ${date(s.expires_at)}`]},
  {title:'สิทธิ์การใช้งานตามที่ตกลง',lines:[s.license_terms]}],footer:original?'ต้นฉบับเก็บในระบบของร้านค้า ใบเสนอราคาไม่ใช่หลักฐานการรับเงิน':'สำเนาจากต้นฉบับที่ร้านค้าเก็บในระบบ ใบเสนอราคาไม่ใช่หลักฐานการรับเงิน'};
 }
 export async function receiptDocument(client:SupabaseClient,id:string,owner:{buyerId:string}|{shopId:string}):Promise<OrderDocument>{
@@ -28,8 +28,8 @@ export async function receiptDocument(client:SupabaseClient,id:string,owner:{buy
  return {title:d.status==='void'?'เอกสารยกเลิก':d.document_type==='receipt'?'ใบเสร็จรับเงิน':'เอกสารยืนยันคืนเงิน',number:d.document_number,edition:(d.status==='void'?'เอกสารยกเลิก / ':'')+(original?'ต้นฉบับสำหรับร้านค้า':'สำเนาสำหรับลูกค้า'),reference:`คำสั่งซื้อ ${d.order_id}`,sections:[
  {title:'ผู้ออกเอกสาร',lines:[s.issuer.name,s.issuer.address,`วันที่ออก ${date(d.issued_at)}`]},
  {title:'ผู้รับเอกสาร',lines:[s.recipient.name,...(s.recipient.address?[s.recipient.address]:[])]},
- {title:'รายการ',lines:s.items.map((i:{name:string;license:string;quantity:number;total_minor:number})=>`${i.name} / ${i.license==='commercial'?'ใช้เชิงพาณิชย์':i.license==='personal'?'ใช้ส่วนตัว':''} / จำนวน ${i.quantity} / ${money(i.total_minor,s.currency)}`)},
- {title:d.document_type==='receipt'?'ยอดรับเงินที่ยืนยัน':'ยอดคืนเงินที่ยืนยัน',lines:[money(s.total_minor,s.currency),`อ้างอิงการรับเงิน ${s.payment_id}`,...(d.status==='void'?[`เหตุผลยกเลิก: ${d.void_reason}`]:[])]}],footer:'เอกสารบันทึกจากรายการเงินจริง ไม่เรียกเก็บ VAT ต้นฉบับเก็บในระบบของร้านค้า'};
+ {title:'รายการ',layout:'items',lines:s.items.map((i:{name:string;license:string;quantity:number;total_minor:number})=>`${i.name} / ${i.license==='commercial'?'ใช้เชิงพาณิชย์':i.license==='personal'?'ใช้ส่วนตัว':''} / จำนวน ${i.quantity} / ${money(i.total_minor,s.currency)}`)},
+ {title:d.document_type==='receipt'?'ยอดรับเงินที่ยืนยัน':'ยอดคืนเงินที่ยืนยัน',layout:'summary',lines:[money(s.total_minor,s.currency),`อ้างอิงการรับเงิน ${s.payment_id}`,...(d.status==='void'?[`เหตุผลยกเลิก: ${d.void_reason}`]:[])]}],footer:'เอกสารบันทึกจากรายการเงินจริง ไม่เรียกเก็บ VAT ต้นฉบับเก็บในระบบของร้านค้า'};
 }
 export async function licenceDocument(client:SupabaseClient,itemId:string,buyerId:string):Promise<OrderDocument>{
  const {data:e,error:ee}=await client.from('download_entitlements').select('created_at').eq('order_item_id',itemId).eq('buyer_id',buyerId).is('revoked_at',null).maybeSingle();if(ee)throw Error('Licence entitlement unavailable');if(!e)notFound();
