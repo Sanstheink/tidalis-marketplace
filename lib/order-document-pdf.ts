@@ -82,7 +82,7 @@ export async function renderOrderDocument(data:OrderDocument):Promise<Buffer>{
    const height=headingHeight+bodyHeight+12;
    const summary=section.layout==='summary';
    if(summary)doc.rect(left,y,width,height).fill(color.pale);else rule(y);
-   
+
    let row=y+9;for(const line of heading){text(line,left+16,row,11,true,color.accent);row+=18;}
    row=y+headingHeight;
    for(let i=offset;i<end;i++){

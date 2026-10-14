@@ -88,7 +88,7 @@ begin
  end if;
  if o.status not in ('fulfilled','partially_refunded') or not exists(select 1 from public.download_entitlements where order_item_id=i.id and buyer_id=o.buyer_id and revoked_at is null) then raise exception 'rights_delivery_required';end if;
  if exists(select 1 from public.refund_requests where order_id=o.id and status in ('requested','under_review','approved','processing')) then raise exception 'rights_delivery_required';end if;
- select * into r from public.financial_documents where order_id=o.id and document_type='receipt' and status='issued';
+ select * into r from public.financial_documents where order_id=o.id and document_type='receipt' and status='issued' for share;
  if not found or not exists(select 1 from public.payment_attempts where order_id=o.id and status='confirmed') then raise exception 'rights_receipt_required';end if;
  if exists(select 1 from public.artwork_rights_documents where order_item_id=i.id and (status='offered' or (status='effective' and kind='assignment'))) then raise exception 'rights_existing_document';end if;
  if p_kind is null or p_kind not in ('license','assignment') then raise exception 'rights_invalid_details';end if;
@@ -125,7 +125,8 @@ begin
  if d.status='effective' and d.buyer_signature=trim(p_signature) then return;end if;
  if d.status<>'offered' or d.expires_at<=now() then raise exception 'rights_offer_closed';end if;
  if o.status not in ('fulfilled','partially_refunded') or not exists(select 1 from public.download_entitlements where order_item_id=d.order_item_id and buyer_id=auth.uid() and revoked_at is null) or exists(select 1 from public.refund_requests where order_id=o.id and status in ('requested','under_review','approved','processing')) then raise exception 'rights_delivery_required';end if;
- if not exists(select 1 from public.financial_documents where id=(d.snapshot->>'receipt_id')::uuid and status='issued') then raise exception 'rights_receipt_changed';end if;
+ perform 1 from public.financial_documents where id=(d.snapshot->>'receipt_id')::uuid and status='issued' for share;
+ if not found then raise exception 'rights_receipt_changed';end if;
  if d.snapshot->>'duration'='until' and (d.snapshot->>'ends_on')::date<=(now() at time zone 'Asia/Bangkok')::date then raise exception 'rights_invalid_duration';end if;
  if o.order_kind='fixed' and d.exclusive_mode<>'non_exclusive' then
   perform 1 from public.products where id=d.product_id for update;
