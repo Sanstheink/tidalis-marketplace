@@ -23,7 +23,7 @@ export async function startPayment(form:FormData){
  if(!supabaseService())failure(back,'payment_configuration_required');
  let useRecipient=false;
  if(order){const [recipient,prior]=await Promise.all([client.from('order_receipt_recipients').select('order_id').eq('order_id',order).maybeSingle(),client.from('payment_attempts').select('id').eq('order_id',order).limit(1).maybeSingle()]);if(recipient.error||prior.error)failure(back,'receipt_unavailable');useRecipient=Boolean(recipient.data||!prior.data);}
- const {data,error}=useRecipient?await client.rpc('create_order_payment',{p_order:order,p_method:method,p_name:String(form.get('recipientName')||'').trim(),p_address:String(form.get('recipientAddress')||'').trim()}):await client.rpc('create_payment_attempt',{p_order_id:order,p_invoice_id:invoice,p_method:method});
+ const {data,error}=useRecipient?await client.rpc('create_order_payment_with_identity',{p_order:order,p_method:method,p_name:String(form.get('recipientName')||'').trim(),p_address:String(form.get('recipientAddress')||'').trim(),p_tax_id:String(form.get('recipientTaxId')||'').trim()}):await client.rpc('create_payment_attempt',{p_order_id:order,p_invoice_id:invoice,p_method:method});
  if(error)failure(back,error.message);revalidatePath(back);redirect(`/payments/${data}`);
 }
 export async function uploadPaymentProof(form:FormData){

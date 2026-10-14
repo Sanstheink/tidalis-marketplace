@@ -29,7 +29,7 @@ export async function publishSellerAgreement(formData:FormData){
 export async function createGeneralPlatformPolicyDraft(formData:FormData){
   const {client}=await requirePlatformAdmin();
   const type=formData.get('policy_type'),title=formData.get('title'),content=formData.get('content');
-  const allowed=['terms','privacy','cookies','buyer-protection','payment-refund','copyright','community'];
+  const allowed=['terms','privacy','cookies','buyer-protection','payment-refund','copyright','community','standard-license','standard-assignment'];
   if(typeof type!=='string'||!allowed.includes(type)||typeof title!=='string'||typeof content!=='string'||
      title.trim().length<8||title.trim().length>160||content.trim().length<500||content.trim().length>30000)
     redirect('/admin/policies?result=invalid');

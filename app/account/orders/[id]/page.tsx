@@ -4,13 +4,14 @@ import {ArrowLeft,ArrowRight,Store,ShieldCheck,FileText} from 'lucide-react';
 import {requireUser} from '@/lib/auth';
 import {publicPrice} from '@/lib/public-catalog-shared';
 import {orderState,orderLabels,uuidPattern,type CheckoutPolicy} from '@/lib/marketplace-cart-utils';
+import OrderRights from '@/components/OrderRights';
 import OrderOperations from '@/components/OrderOperations';
 import type {WorkOrder} from '@/lib/phase6';
 import OrderDocumentActions from '@/components/OrderDocumentActions';
 import {OrderReservation} from '@/components/OrderReservation';
 export const dynamic='force-dynamic';
-export default async function OrderDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{notice?:string;messagePage?:string}>}){
-  const {id}=await params;const {notice,messagePage}=await searchParams;
+export default async function OrderDetail({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{notice?:string;messagePage?:string;rights?:string}>}){
+  const {id}=await params;const {notice,messagePage,rights}=await searchParams;
   const {client,user}=await requireUser(`/account/orders/${id}`);
   if(!uuidPattern.test(id))notFound();
   const {data:order,error}=await client.from('orders').select('id,shop_id,buyer_id,order_kind,accepted_quote_id,commission_due_at,currency,status,subtotal_minor,vat_minor,total_minor,buyer_note,created_at,reservation_expires_at,cancelled_at,shop_snapshot,policy_snapshot,idempotency_key').eq('id',id).eq('buyer_id',user.id).maybeSingle();
@@ -32,6 +33,6 @@ export default async function OrderDetail({params,searchParams}:{params:Promise<
       <div className="order-totals"><div className="amount-row"><span>ยอดสินค้า</span><strong>{publicPrice(order.subtotal_minor,order.currency)}</strong></div>{order.vat_minor>0?<div className="amount-row"><span>ภาษีตามคำสั่งซื้อ</span><strong>{publicPrice(order.vat_minor,order.currency)}</strong></div>:null}<div className="commerce-total"><span>ยอดรวม</span><strong>{publicPrice(order.total_minor,order.currency)}</strong></div></div></section>
       <section className="commerce-card"><h2><FileText size={18}/> ข้อความถึงศิลปิน</h2><p className="order-note">{order.buyer_note||'ไม่ได้ระบุหมายเหตุ'}</p></section>
       {withUrls.length?<section className="commerce-card checkout-policies"><h2><ShieldCheck size={19}/> เงื่อนไขที่ยอมรับ</h2><p>ฉบับที่บันทึกตอนสั่งซื้อ</p>{withUrls.map(p=><details key={p.id}><summary>{names[p.policy_type]||p.policy_type}<span>{p.scope==='shop'?'ร้านผู้ขาย':'Tidalis'} · ฉบับ {p.version}</span></summary>{p.source_type==='pdf'?(p.document_url?<a href={p.document_url} target="_blank" rel="noreferrer">อ่าน {p.document_name||'เอกสาร'} ↗</a>:<p>เปิดเอกสารไม่ได้ กรุณาลองใหม่</p>):<p>{p.content}</p>}</details>)}</section>:null}
-    <OrderOperations client={client} order={order as WorkOrder} scope="buyer" userId={user.id} notice={notice} messagePage={messagePage}/></div><aside>{order.status==='pending'&&order.idempotency_key&&order.reservation_expires_at?<OrderReservation id={id} expiresAt={order.reservation_expires_at} canCancel={!payment}/>:<section className="commerce-card"><h2>{orderLabels[state]||state}</h2><p>{state==='cancelled'?'คำสั่งซื้อนี้ถูกยกเลิกแล้ว หากโอนไปแล้วให้แนบหลักฐานในรายการชำระเพื่อให้ร้านกระทบยอด':'ติดตามสถานะได้จากหน้าคำสั่งซื้อของคุณ'}</p><Link className="btn btn-outline wide" href="/shop">สำรวจผลงานต่อ <ArrowRight size={16}/></Link></section>}{lastPayment?<Link className="btn btn-outline wide" href={`/payments/${lastPayment.id}`}>ดูประวัติชำระ / หลักฐานการโอน →</Link>:null}{['fulfilled','partially_refunded'].includes(order.status)?<Link className="btn btn-primary wide" href="/account/library">เปิดคลังดาวน์โหลด →</Link>:null}</aside></div>
+    <OrderRights client={client} order={order} scope="buyer" notice={rights} /><OrderOperations client={client} order={order as WorkOrder} scope="buyer" userId={user.id} notice={notice} messagePage={messagePage}/></div><aside>{order.status==='pending'&&order.idempotency_key&&order.reservation_expires_at?<OrderReservation id={id} expiresAt={order.reservation_expires_at} canCancel={!payment}/>:<section className="commerce-card"><h2>{orderLabels[state]||state}</h2><p>{state==='cancelled'?'คำสั่งซื้อนี้ถูกยกเลิกแล้ว หากโอนไปแล้วให้แนบหลักฐานในรายการชำระเพื่อให้ร้านกระทบยอด':'ติดตามสถานะได้จากหน้าคำสั่งซื้อของคุณ'}</p><Link className="btn btn-outline wide" href="/shop">สำรวจผลงานต่อ <ArrowRight size={16}/></Link></section>}{lastPayment?<Link className="btn btn-outline wide" href={`/payments/${lastPayment.id}`}>ดูประวัติชำระ / หลักฐานการโอน →</Link>:null}{['fulfilled','partially_refunded'].includes(order.status)?<Link className="btn btn-primary wide" href="/account/library">เปิดคลังดาวน์โหลด →</Link>:null}</aside></div>
   </div>;
 }

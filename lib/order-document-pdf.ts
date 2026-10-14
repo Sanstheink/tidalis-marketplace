@@ -3,8 +3,8 @@ import PDFDocument from 'pdfkit';
 import path from 'node:path';
 
 export type OrderDocument={
- title:string;number:string;edition:string;reference:string;
- sections:{title:string;lines:string[];layout?:'summary'|'items'}[];
+ title:string;subtitle?:string;number:string;edition:string;reference:string;
+ sections:{title:string;lines:string[];layout?:'summary'|'items';startPage?:boolean;media?:{thumbnail:Buffer;qr:Buffer;url:string}}[];
  footer:string;
 };
 type TextLine={text:string;size:number;bold:boolean;height:number;item:number};
@@ -20,7 +20,7 @@ export async function renderOrderDocument(data:OrderDocument):Promise<Buffer>{
  doc.registerFont('regular',path.join(process.cwd(),'assets/fonts/Sarabun-Regular.ttf'));
  doc.registerFont('semibold',path.join(process.cwd(),'assets/fonts/Sarabun-SemiBold.ttf'));
  const left=48,width=doc.page.width-96,bottom=doc.page.height-76;
- const color={ink:'#292337',muted:'#686473',accent:'#70528D',pale:'#F4F0F8',line:'#E2DBE9',paper:'#FAF9FC'};
+ const color={ink:'#182738',muted:'#637080',accent:'#243C54',pale:'#F0F3F6',line:'#CBD3DA',paper:'#FFFFFF'};
  const words=new Intl.Segmenter('th',{granularity:'word'}),graphemes=new Intl.Segmenter('th',{granularity:'grapheme'});
  let y=44;
 
@@ -47,36 +47,26 @@ export async function renderOrderDocument(data:OrderDocument):Promise<Buffer>{
  }
  function rule(top:number){doc.moveTo(left,top).lineTo(left+width,top).lineWidth(.6).strokeColor(color.line).stroke();}
  function header(first:boolean){
-  doc.rect(0,0,doc.page.width,6).fill(color.accent);
-  text('TIDALIS',left,36,14,true,color.accent);
-  text('SHOP DOCUMENT',left+width-103,41,9,false,color.muted);
-  y=first?75:66;
-  const titleSize=first?26:15;
-  for(const line of wrap(data.title,width,titleSize,true)){text(line,left,y,titleSize,true);y+=titleSize*1.5;}
-  const editionLines=wrap(data.edition,width-24,10,true);
-  doc.roundedRect(left,y+5,width,editionLines.length*17+16,5).fill(color.pale);
-  for(const line of editionLines){text(line,left+12,y+12,10,true,color.accent);y+=17;}
-  y+=30;
-  if(first){
-   const number=wrap(data.number,width-104,9.5,true),reference=wrap(data.reference,width-104,9.5);
-   const height=(number.length+reference.length)*16+25;
-   doc.roundedRect(left,y,width,height,5).fill(color.paper);
-   text('เลขที่เอกสาร',left+12,y+10,9,false,color.muted);
-   let row=y+9;for(const line of number){text(line,left+96,row,9.5,true);row+=16;}
-   text('อ้างอิง',left+12,row+4,9,false,color.muted);row+=4;
-   for(const line of reference){text(line,left+96,row,9.5);row+=16;}
-   y+=height+21;
-  }else{
-   for(const line of wrap(data.number,width,9)){text(line,left,y,9,false,color.muted);y+=15;}
-   rule(y+3);y+=20;
-  }
+  text('TIDALIS',left,34,12,true,color.accent);
+  text('ELECTRONIC DOCUMENT',left+width-119,37,8,false,color.muted);
+  doc.moveTo(left,57).lineTo(left+width,57).lineWidth(1.2).strokeColor('#B99A63').stroke();
+  y=first?73:69;
+  const size=first?19:12;
+  for(const line of wrap(data.title,width,size,true)){font(size,true);text(line,left+(width-doc.widthOfString(line))/2,y,size,true);y+=size*1.45;}
+  if(first&&data.subtitle){font(9,true);text(data.subtitle,left+(width-doc.widthOfString(data.subtitle))/2,y+2,9,true,color.muted);y+=23;}
+  for(const line of wrap(data.edition,width,9,true)){font(9,true);text(line,left+(width-doc.widthOfString(line))/2,y+3,9,true,color.accent);y+=16;}
+  y+=14;
+  for(const line of wrap(`เลขที่เอกสาร: ${data.number}`,width,9.5,true)){text(line,left,y,9.5,true);y+=16;}
+  if(first){for(const line of wrap(data.reference,width,9.5)){text(line,left,y,9.5,false,color.muted);y+=16;}}
+  rule(y+5);y+=19;
  }
  function nextPage(){doc.addPage();header(false);}
  header(true);
 
  data.sections.forEach((section,index)=>{
+  if(section.startPage)nextPage();
   const lines:TextLine[]=section.lines.flatMap((value,item)=>{
-   const emphasis=section.layout==='summary'&&item===0,size=emphasis?20:10.5;
+   const emphasis=section.layout==='summary'&&item===0,size=emphasis?19:10;
    return wrap(value,width-32,size,emphasis).map(text=>({text,size,bold:emphasis,height:size*1.65,item}));
   });
   // Every continuation repeats its heading; keep at least two body lines with it.
@@ -91,16 +81,27 @@ export async function renderOrderDocument(data:OrderDocument):Promise<Buffer>{
    while(end<lines.length&&y+headingHeight+bodyHeight+lines[end].height+12<=bottom){bodyHeight+=lines[end].height;end++;}
    const height=headingHeight+bodyHeight+12;
    const summary=section.layout==='summary';
-   doc.roundedRect(left,y,width,height,6).fill(summary?color.pale:color.paper);
-   doc.rect(left,y+11,3,Math.max(16,headingHeight-18)).fill(color.accent);
+   if(summary)doc.rect(left,y,width,height).fill(color.pale);else rule(y);
+
    let row=y+9;for(const line of heading){text(line,left+16,row,11,true,color.accent);row+=18;}
    row=y+headingHeight;
    for(let i=offset;i<end;i++){
     const line=lines[i];
-    if(section.layout==='items'&&line.item%2===1)doc.rect(left+8,row-1,width-16,line.height).fill('#EFEAF4');
+    if(section.layout==='items'&&line.item%2===1)doc.rect(left+8,row-1,width-16,line.height).fill('#F2F4F6');
     text(line.text,left+16,row,line.size,line.bold);row+=line.height;
    }
-   y+=height+13;offset=end;
+   y+=height+9;offset=end;
+  }
+  if(section.media){
+   const m=section.media;const urlLines=wrap(m.url,width,8);const mediaHeight=151+urlLines.length*13;
+   if(y+mediaHeight>bottom)nextPage();
+   doc.rect(left,y,width-135,108).lineWidth(.6).strokeColor(color.line).stroke();
+   doc.image(m.thumbnail,left+6,y+5,{fit:[width-147,98],align:'center',valign:'center'});
+   doc.image(m.qr,left+width-109,y,{width:105,height:105});
+   text('ภาพตัวอย่างผลงาน / Artwork preview',left,y+116,8,false,color.muted);
+   text('QR หนังสือสัญญา',left+width-100,y+116,8,true,color.accent);
+   y+=137;for(const line of urlLines){text(line,left,y,8,false,color.muted);y+=13;}
+   y+=16;
   }
  });
 
