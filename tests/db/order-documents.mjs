@@ -78,6 +78,39 @@ try{
  await check('seller can withdraw and buyer can decline only pending offers',async()=>{const id=await offer('license',{item:fixedItem,preview:fixedPreview});await as(buyer);await denied(()=>rows('select public.close_artwork_rights($1,false)',[id]),/rights_unavailable/);await rows('select public.close_artwork_rights($1,true)',[id]);await as(seller,'aal2');const next=await offer('license',{item:fixedItem,preview:fixedPreview});await rows('select public.close_artwork_rights($1,false)',[next]);assert.equal((await rows('select status from public.artwork_rights_documents where id=$1',[next]))[0].status,'withdrawn');});
 
  await check('receipt corrections invalidate a pending signature without rewriting its original offer',async()=>{await as(seller,'aal2');const doc=await offer('license',{item:fixedItem,preview:fixedPreview});const frozen=(await rows('select * from public.artwork_rights_documents where id=$1',[doc]))[0];await rows('select public.void_shop_receipt($1,$2)',[frozen.snapshot.receipt_id,'Synthetic correction after offer.']);await as(buyer);await denied(()=>accept(doc,frozen.content_hash),/rights_receipt_changed/);assert.equal((await rows('select status from public.artwork_rights_documents where id=$1',[doc]))[0].status,'offered');await as(seller,'aal2');await rows('select public.close_artwork_rights($1,false)',[doc]);await rows('select public.issue_shop_receipt($1,$2,null)',[fixed,'Corrected Fixed Buyer']);});
- await check('exclusive offers reserve fixed artworks and acceptance stops resale',async()=>{await as(seller,'aal2');const id=await offer('assignment',{item:fixedItem,preview:fixedPreview});await as(buyer);const cart=[{productId:'30000000-0000-4000-8000-000000000001',quantity:1,license:'personal',expectedPriceMinor:12675,expectedTerms:'Local test license for personal use only.'}];await denied(()=>rows('select public.create_fixed_order($1,$2::jsonb,$3,$4::uuid[],$5)',[shop,JSON.stringify(cart),'',policies,randomUUID()]),/rights_conflict/);const h=(await rows('select content_hash from public.artwork_rights_documents where id=$1',[id]))[0].content_hash;await accept(id,h);await owner();assert.equal((await rows("select status from public.products where id='30000000-0000-4000-8000-000000000001'"))[0].status,'archived');});
+ const fixedCart=[{productId:'30000000-0000-4000-8000-000000000001',quantity:1,license:'personal',expectedPriceMinor:12675,expectedTerms:'Local test license for personal use only.'}];
+ let lateOrder,lateAttempt;
+ await check('expired fixed payments retain proof for reconciliation without granting rights',async()=>{
+  await as(buyer);
+  lateOrder=(await rows('select public.create_fixed_order($1,$2::jsonb,$3,$4::uuid[],$5) id',[shop,JSON.stringify(fixedCart),'',policies,randomUUID()]))[0].id;
+  lateAttempt=(await rows("select public.create_order_payment($1,'bank_transfer','Late Test Buyer',null) id",[lateOrder]))[0].id;
+  await owner();
+  await rows("update public.orders set reservation_expires_at=now()-interval '1 minute' where id=$1",[lateOrder]);
+  await rows("update public.product_reservations set expires_at=now()-interval '1 minute' where order_id=$1",[lateOrder]);
+  await rows("update public.payment_attempts set expires_at=now()-interval '1 minute' where id=$1",[lateAttempt]);
+  await proofFor(lateAttempt,'b');await as(seller,'aal2');
+  assert.equal((await rows('select status from public.payment_attempts where id=$1',[lateAttempt]))[0].status,'needs_review');
+  assert.equal(await state(lateOrder),'pending');
+ });
+ await check('exclusive offers block new orders and late reconciliation before acceptance',async()=>{
+  await as(seller,'aal2');const id=await offer('assignment',{item:fixedItem,preview:fixedPreview});
+  assert.equal((await rows('select public.restore_order_payment($1,$2) result',[lateAttempt,'Synthetic late-payment reconciliation while rights are offered.']))[0].result,'needs_review');
+  assert.match((await rows('select review_note from public.payment_attempts where id=$1',[lateAttempt]))[0].review_note,/สิทธิ์แต่ผู้เดียว/);
+  assert.equal((await rows('select id from public.financial_documents where order_id=$1',[lateOrder])).length,0);
+  await as(buyer);
+  await denied(()=>rows('select public.create_fixed_order($1,$2::jsonb,$3,$4::uuid[],$5)',[shop,JSON.stringify(fixedCart),'',policies,randomUUID()]),/rights_conflict/);
+  const h=(await rows('select content_hash from public.artwork_rights_documents where id=$1',[id]))[0].content_hash;await accept(id,h);
+  await owner();assert.equal((await rows("select status from public.products where id='30000000-0000-4000-8000-000000000001'"))[0].status,'archived');
+ });
+ await check('accepted exclusive rights cannot be bypassed by restoring an expired payment',async()=>{
+  await as(seller,'aal2');
+  assert.equal((await rows('select public.restore_order_payment($1,$2) result',[lateAttempt,'Synthetic late-payment reconciliation after assignment.']))[0].result,'needs_review');
+  assert.equal(await state(lateOrder),'payment_review');
+  assert.equal((await rows('select id from public.financial_documents where order_id=$1',[lateOrder])).length,0);
+  await owner();
+  assert.equal((await rows('select d.id from public.download_entitlements d join public.order_items i on i.id=d.order_item_id where i.order_id=$1',[lateOrder])).length,0);
+  assert.equal((await rows("select count(*)::int n from public.audit_logs where target_id=$1 and action='paid_artwork_rights_conflict'",[lateAttempt]))[0].n,2);
+  await as(buyer);await denied(()=>rows('select private.finish_fixed_payment($1,$2)',[lateAttempt,buyer]),/permission denied/);
+ });
  console.log(`Order document regressions: ${count} passed (isolated PostgreSQL model)`);
 }catch(error){console.error('Order document regressions failed:',error.message,error.code||'',error.where||'');process.exitCode=1;}finally{await db.close();}

@@ -163,6 +163,71 @@ revoke all on function private.lock_artwork_rights(),private.guard_artwork_reser
 revoke all on function public.offer_artwork_rights(uuid,text,jsonb,uuid,text,text,boolean,uuid),private.offer_artwork_rights(uuid,text,jsonb,uuid,text,text,boolean,uuid),public.accept_artwork_rights(uuid,text,text,boolean),private.accept_artwork_rights(uuid,text,text,boolean),public.close_artwork_rights(uuid,boolean),private.close_artwork_rights(uuid,boolean) from public,anon,authenticated,service_role;
 grant execute on function public.offer_artwork_rights(uuid,text,jsonb,uuid,text,text,boolean,uuid),private.offer_artwork_rights(uuid,text,jsonb,uuid,text,text,boolean,uuid),public.accept_artwork_rights(uuid,text,text,boolean),private.accept_artwork_rights(uuid,text,text,boolean),public.close_artwork_rights(uuid,boolean),private.close_artwork_rights(uuid,boolean) to authenticated;
 
+-- Preserve reconciliation and receipt behavior; reject conflicting late allocations atomically.
+create or replace function private.finish_fixed_payment(p_attempt_id uuid,p_actor uuid)
+returns text language plpgsql security definer set search_path='' as $$
+declare a public.payment_attempts%rowtype; o public.orders%rowtype; i public.seller_invoices%rowtype; p record; available bigint; rule public.commission_fee_rules%rowtype;
+begin
+ select * into a from public.payment_attempts where id=p_attempt_id;
+ if not found then raise exception 'payment_unavailable'; end if;
+ if a.order_id is not null then select * into o from public.orders where id=a.order_id for update;
+ else select * into i from public.seller_invoices where id=a.invoice_id for update; end if;
+ select * into a from public.payment_attempts where id=p_attempt_id for update;
+ if a.status in ('confirmed','needs_review') then return a.status; end if;
+ if a.status<>'proof_submitted' then raise exception 'payment_not_reviewable'; end if;
+ if a.order_id is not null then
+  if o.total_minor<>a.amount_minor or o.currency<>a.currency then raise exception 'order_changed'; end if;
+  if o.status not in ('pending','payment_review') then
+   update public.payment_attempts set status='needs_review',confirmed_at=now(),review_note='ได้รับเงินสำหรับรายการที่ปิดแล้ว กรุณาตรวจสอบการคืนเงิน' where id=a.id;
+   update public.payment_transactions set status='under_review' where id=a.id;
+   insert into public.audit_logs(shop_id,action,target_table,target_id) values(a.shop_id,'paid_closed_order','payment_attempts',a.id);
+   return 'needs_review';
+  end if;
+  perform pr.id from public.products pr where pr.id in(select product_id from public.order_items where order_id=o.id) order by pr.id for update;
+  for p in select pr.id,pr.stock,sum(oi.quantity) qty from public.order_items oi join public.products pr on pr.id=oi.product_id where oi.order_id=o.id group by pr.id,pr.stock loop
+   -- All product locks are held: a late payment cannot revive rights sold to another order.
+   if exists(select 1 from public.artwork_rights_documents d where d.product_id=p.id and d.order_id<>o.id
+     and d.exclusive_mode<>'non_exclusive' and (d.status='effective' or (d.status='offered' and d.expires_at>now()))) then
+    update public.payment_attempts set status='needs_review',confirmed_at=now(),confirmed_by=p_actor,
+     review_note='ได้รับเงินสำหรับผลงานที่ติดข้อตกลงสิทธิ์แต่ผู้เดียว กรุณาตรวจสอบและดำเนินการคืนเงิน' where id=a.id;
+    update public.payment_transactions set status='under_review' where id=a.id;
+    update public.orders set status='payment_review' where id=o.id;
+    insert into public.audit_logs(actor_id,shop_id,action,target_table,target_id) values(p_actor,a.shop_id,'paid_artwork_rights_conflict','payment_attempts',a.id);
+    return 'needs_review';
+   end if;
+   select coalesce(sum(quantity),0) into available from public.product_reservations where product_id=p.id and order_id<>o.id and released_at is null and expires_at>now();
+   if p.stock is not null and p.stock-available<p.qty then
+    update public.payment_attempts set status='needs_review',confirmed_at=now(),confirmed_by=p_actor,
+     review_note='ได้รับเงินหลังสิทธิ์การจองหมดและสินค้าไม่พอ กรุณาติดต่อร้านเพื่อคืนเงิน' where id=a.id;
+    update public.payment_transactions set status='under_review' where id=a.id;
+    update public.orders set status='payment_review' where id=o.id;
+    insert into public.audit_logs(actor_id,shop_id,action,target_table,target_id) values(p_actor,a.shop_id,'paid_stock_conflict','payment_attempts',a.id);
+    return 'needs_review';
+   end if;
+  end loop;
+  -- Permanent inventory allocation preserves immutable published product contents.
+  update public.product_reservations set expires_at='infinity',released_at=null,fulfilled_at=now() where order_id=o.id;
+  update public.orders set status='fulfilled' where id=o.id;
+  update public.payment_transactions set status='confirmed',confirmed_by=p_actor,confirmed_at=now() where id=a.id;
+  insert into public.download_entitlements(buyer_id,order_item_id) select o.buyer_id,id from public.order_items where order_id=o.id on conflict(order_item_id) do nothing;
+  select * into rule from public.commission_fee_rules where (shop_id=o.shop_id or shop_id is null) and category is null
+   and effective_from<=o.created_at and (effective_until is null or effective_until>o.created_at) order by shop_id nulls last,effective_from desc,id limit 1;
+  if found then insert into public.commission_entries(order_id,shop_id,fee_rule_id,rate_basis_points,fee_base_minor,fee_minor,currency)
+   values(o.id,o.shop_id,rule.id,rule.rate_basis_points,o.subtotal_minor,(o.subtotal_minor*rule.rate_basis_points+5000)/10000,o.currency) on conflict(order_id) do nothing; end if;
+ else
+  if i.total_minor<>a.amount_minor or i.currency<>a.currency then raise exception 'invoice_changed'; end if;
+  if i.status not in ('issued','overdue') then
+   update public.payment_attempts set status='needs_review',review_note='ได้รับเงินสำหรับใบแจ้งหนี้ที่ปิดแล้ว กรุณาตรวจสอบการคืนเงิน' where id=a.id;
+   insert into public.audit_logs(action,target_table,target_id) values('paid_closed_invoice','payment_attempts',a.id);
+   return 'needs_review';
+  end if;
+  update public.platform_fee_payments set status='confirmed',confirmed_by=p_actor,confirmed_at=now() where id=a.id;
+  update public.seller_invoices set status='paid' where id=i.id;
+ end if;
+ update public.payment_attempts set status='confirmed',confirmed_by=p_actor,confirmed_at=now() where id=a.id;
+ insert into public.audit_logs(actor_id,shop_id,action,target_table,target_id,metadata) values(p_actor,a.shop_id,'payment_confirmed','payment_attempts',a.id,jsonb_build_object('method',a.method,'amount_minor',a.amount_minor,'currency',a.currency));
+ return 'confirmed';
+end $$;
 create or replace function private.create_shop_receipt(p_order uuid,p_name text,p_address text,p_actor uuid) returns uuid language plpgsql security definer set search_path='' as $$
 declare o public.orders%rowtype;a public.payment_attempts%rowtype;p public.payment_profiles%rowtype;v uuid;num text;items jsonb;begin
  select * into o from public.orders where id=p_order for update;
