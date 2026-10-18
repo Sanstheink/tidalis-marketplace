@@ -1,5 +1,6 @@
 'use client';
-import {useState} from 'react';
+import {useActionState,useState} from 'react';
+import {validateRightsForm,type RightsFormErrors} from '@/lib/rights-form-validation';
 import {useFormStatus} from 'react-dom';
 import {offerRights} from '@/app/rights/actions';
 import {rightsKinds,rightsModes,rightsUsage} from '@/lib/artwork-rights';
@@ -7,10 +8,21 @@ export type RightsPolicy={id:string;policy_type:string;title:string;version:numb
 function Submit(){const {pending}=useFormStatus();return <button className="btn btn-primary" disabled={pending}>{pending?'กำลังบันทึก…':'ลงนามและเสนอเอกสารให้ผู้ซื้อ'}</button>;}
 export default function RightsOfferForm({order,items,shopName,policies,requestKey}:{order:string;items:{id:string;name:string;terms:string}[];shopName:string;policies:RightsPolicy[];requestKey:string}){
  const [kind,setKind]=useState<'license'|'assignment'>('license'),[duration,setDuration]=useState('perpetual'),[item,setItem]=useState(items[0]?.id||'');
+ const [state,formAction]=useActionState(offerRights,{errors:{},message:''});
+ const [clientErrors,setClientErrors]=useState<RightsFormErrors>({});
+ const errors={...state.errors,...clientErrors};
  const selected=items.find(i=>i.id===item),policy=policies.find(p=>p.policy_type===`standard-${kind}`);
- return <form action={offerRights} className="operations-form rights-form"><input type="hidden" name="order" value={order}/><input type="hidden" name="key" value={requestKey}/><input type="hidden" name="policy" value={policy?.id||''}/>
+ return <form action={formAction} onReset={event=>event.preventDefault()} onSubmit={event=>{
+ const form=event.currentTarget;
+ const values=Object.fromEntries(Array.from(new FormData(form).entries()).filter((entry):entry is [string,string]=>typeof entry[1]==='string'));
+ const next=validateRightsForm(values);setClientErrors(next);
+ if(Object.keys(next).length){event.preventDefault();const field=form.elements.namedItem(Object.keys(next)[0]);if(field instanceof HTMLElement)field.focus();}
+ }} className="operations-form rights-form"><input type="hidden" name="order" value={order}/><input type="hidden" name="key" value={requestKey}/><input type="hidden" name="policy" value={policy?.id||''}/>
+ {state.message?<p role="alert" className="form-message">{state.message}</p>:null}
+ {Object.keys(errors).length?<div role="alert" className="form-message"><strong>กรุณาตรวจรายละเอียดต่อไปนี้</strong><ul>{Object.entries(errors).map(([field,message])=><li key={field}>{message}</li>)}</ul></div>:null}
  <label>ประเภทเอกสาร<select aria-label="ประเภทเอกสาร" name="kind" value={kind} onChange={e=>setKind(e.target.value as typeof kind)}>{Object.entries(rightsKinds).map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label>
  <label>รายการในคำสั่งซื้อ<select aria-label="รายการในคำสั่งซื้อ" name="item" value={item} onChange={e=>setItem(e.target.value)}>{items.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label>
+ <p>ชื่อผลงานและผู้ให้สิทธิ์อย่างน้อย 3 ตัวอักษร ขอบเขตสิทธิ์อย่างน้อย 30 ตัวอักษร และรายละเอียดอ้างอิงข้อตกลงอย่างน้อย 10 ตัวอักษร โดยไม่นับช่องว่างหัวท้าย</p>
  <label>ชื่อผลงาน<input key={item} name="title" defaultValue={selected?.name} minLength={3} maxLength={200} required/></label>
  <label>{kind==='assignment'?'ผู้โอนสิทธิ์':'ผู้ให้สิทธิ์'} (ชื่อจริง / นิติบุคคล / ร้านค้า)<input name="licensor" defaultValue={shopName} minLength={3} maxLength={160} required/></label>
  {kind==='license'?<><label>ประเภทการใช้สิทธิ์<select aria-label="ประเภทการใช้สิทธิ์" name="usage">{Object.entries(rightsUsage).filter(([k])=>k!=='assignment').map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label><label>ลักษณะการให้สิทธิ์<select aria-label="ลักษณะการให้สิทธิ์" name="exclusivity">{Object.entries(rightsModes).filter(([k])=>k!=='assignment').map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label></>:<><input type="hidden" name="usage" value="assignment"/><input type="hidden" name="exclusivity" value="assignment"/><p className="rights-note">โอนสิทธิ์ทางเศรษฐกิจตามขอบเขตที่ระบุ ค่าตอบแทนต้องรวมในรายการที่ชำระแล้ว การคืนเงินไม่ทำให้สิทธิ์โอนกลับอัตโนมัติ</p></>}
