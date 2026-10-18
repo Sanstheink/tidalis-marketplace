@@ -12,7 +12,23 @@ export async function verifyArtworkRights(buyer:Page,seller:Page,admin:Page,orde
   await seller.goto(`/seller/orders/${order}`);await seller.getByText('จัดทำเอกสารสิทธิ์ฉบับใหม่',{exact:true}).click();const form=seller.locator('.rights-form');
   await form.getByLabel('ประเภทเอกสาร',{exact:true}).selectOption(kind);
   if(kind==='license'){await form.getByLabel('ประเภทการใช้สิทธิ์',{exact:true}).selectOption('merchandise');await form.getByLabel('ลักษณะการให้สิทธิ์',{exact:true}).selectOption('sole');}
-  await form.getByLabel('ขอบเขต สิทธิ์เดิม และข้อจำกัดที่ตกลง').fill('Synthetic terms: allow reproduction of the agreed illustration; no third-party material is included.');await form.getByLabel('รายละเอียดอ้างอิงข้อตกลง').fill('Buyer and seller agreed in the local test order chat.');await form.getByLabel('ภาพตัวอย่างผลงาน').setInputFiles({name:'artwork.png',mimeType:'image/png',buffer:await QRCode.toBuffer('Synthetic artwork fixture only',{width:256})});await form.getByLabel('ชื่อผู้ลงนามแทนผู้ให้สิทธิ์').fill('Synthetic Artist Signer');await form.getByLabel(/ฉันมีอำนาจให้หรือโอนสิทธิ์/).check();await form.getByRole('button',{name:'ลงนามและเสนอเอกสารให้ผู้ซื้อ',exact:true}).click();await expect(seller).toHaveURL(/\/rights\/[0-9a-f-]{36}\?rights=offered$/);
+  await form.getByLabel('ขอบเขต สิทธิ์เดิม และข้อจำกัดที่ตกลง').fill('Synthetic terms: allow reproduction of the agreed illustration; no third-party material is included.');await form.getByLabel('รายละเอียดอ้างอิงข้อตกลง').fill('Buyer and seller agreed in the local test order chat.');await form.getByLabel('ภาพตัวอย่างผลงาน').setInputFiles({name:'artwork.png',mimeType:'image/png',buffer:await QRCode.toBuffer('Synthetic artwork fixture only',{width:256})});await form.getByLabel('ชื่อผู้ลงนามแทนผู้ให้สิทธิ์').fill('Synthetic Artist Signer');await form.getByLabel(/ฉันมีอำนาจให้หรือโอนสิทธิ์/).check();
+  const title=form.getByLabel('ชื่อผลงาน',{exact:true});const originalTitle=await title.inputValue();
+  await title.fill('  A  ');await form.getByRole('button',{name:'ลงนามและเสนอเอกสารให้ผู้ซื้อ',exact:true}).click();
+  await expect(form.getByRole('alert')).toContainText('ชื่อผลงานต้องมี 3–200 ตัวอักษร');
+  await expect(title).toHaveValue('  A  ');
+  await expect(form.getByLabel('รายละเอียดอ้างอิงข้อตกลง')).toHaveValue('Buyer and seller agreed in the local test order chat.');
+  expect(await form.getByLabel('ภาพตัวอย่างผลงาน').evaluate((input:HTMLInputElement)=>input.files?.length)).toBe(1);
+  await title.fill(originalTitle);
+  // A server-side rejection must also keep text, consent and the selected file.
+  await form.getByLabel('ภาพตัวอย่างผลงาน').setInputFiles({name:'invalid.png',mimeType:'image/png',buffer:Buffer.from('This is not a real PNG image, despite its file name.')});
+  await form.getByRole('button',{name:'ลงนามและเสนอเอกสารให้ผู้ซื้อ',exact:true}).click();
+  await expect(form.getByRole('alert').filter({hasText:'แนบภาพ JPG หรือ PNG'})).toBeVisible();
+  await expect(title).toHaveValue(originalTitle);
+  await expect(form.getByLabel(/ฉันมีอำนาจให้หรือโอนสิทธิ์/)).toBeChecked();
+  expect(await form.getByLabel('ภาพตัวอย่างผลงาน').evaluate((input:HTMLInputElement)=>input.files?.[0]?.name)).toBe('invalid.png');
+  await form.getByLabel('ภาพตัวอย่างผลงาน').setInputFiles({name:'artwork.png',mimeType:'image/png',buffer:await QRCode.toBuffer('Synthetic artwork fixture only',{width:256})});
+  await form.getByRole('button',{name:'ลงนามและเสนอเอกสารให้ผู้ซื้อ',exact:true}).click();await expect(seller).toHaveURL(/\/rights\/[0-9a-f-]{36}\?rights=offered$/);
   const id=new URL(seller.url()).pathname.split('/').at(-1)!;ids.push(id);
   expect((await seller.request.get(`/rights/${id}/download`)).status()).toBe(404);
   await buyer.goto(`/rights/${id}`);await expect(buyer.locator('.rights-document')).toContainText('ผู้ซื้อทดสอบ Local Test Buyer');await expect(buyer.locator('.rights-preview img')).toBeVisible();
